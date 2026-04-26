@@ -1,0 +1,18 @@
+{
+  "name": "SANNUR Ombor Boshqaruv Tizimi",
+  "short_name": "SANNUR OMS",
+  "description": "Ombor va ustalar boshqaruvi tizimi",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#f97316",
+  "background_color": "#0f1117",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192 256x256 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

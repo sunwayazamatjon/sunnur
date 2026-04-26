@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>SANNUR — Ombor Boshqaruv Tizimi</title>
+
+  <!-- PWA o'rnatish uchun -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f97316">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SANNUR OMS">
+
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- ===== KIRISH EKRANI (LOGIN) ===== -->
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="login-logo">
+        <img src="logo.png" alt="Sannur Logo"
+          style="width: 110px; height: 110px; border-radius: 50%; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.15)">
+      </div>
+      <div class="login-title"><span>SANNUR</span> OMS</div>
+      <div class="login-sub">Ombor Boshqaruv Tizimi</div>
+      <div class="login-form">
+        <div>
+          <label>Login</label>
+          <input type="text" id="login-user" placeholder="Login" autocomplete="username">
+        </div>
+        <div>
+          <label>Parol</label>
+          <input type="password" id="login-pass" placeholder="Parol" autocomplete="current-password">
+        </div>
+        <div id="login-error" class="login-error"></div>
+        <button class="login-btn" onclick="doLogin()">🔐 Kirish</button>
+      </div>
+      <div class="login-hint">Mehmonlar uchun login va parol : admin / admin</div>
+    </div>
+  </div>
+
+  <!-- ===== ASOSIY ILOVA ===== -->
+  <div id="app">
+
+    <div class="readonly-notice">⚠️ Ko'rish rejimi — faqat ma'lumotlarni ko'rishingiz mumkin</div>
+
+    <!-- HEADER -->
+    <header>
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="logo.png" alt="Sannur Logo"
+          style="width: 40px; height: 40px; border-radius: 50%; object-fit: contain;">
+        <h1>⚙️ <span>SANNUR</span> Ombor Tizimi</h1>
+      </div>
+      <div class="header-right">
+        <div class="stats-bar">
+          <div class="stat">
+            <div class="num" id="st-mahsulot">0</div>
+            <div class="lbl">Mahsulot</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="st-klient">0</div>
+            <div class="lbl">Klientlar</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="st-operatsiya">0</div>
+            <div class="lbl">Operatsiyalar</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="st-kam" style="color:var(--warn)">0</div>
+            <div class="lbl">Kam qolgan</div>
+          </div>
+        </div>
+        <div class="user-badge" id="user-badge"><span id="user-badge-text">—</span></div>
+        <button class="install-btn" id="installBtn" style="display:none" onclick="installPWA()">📲 O'rnatish</button>
+        <button class="download-btn" onclick="fullDataExport()" title="Excel'ga yuklab olish">📥 Excel</button>
+        <button class="btn btn-warning btn-sm" onclick="exportJSON()" title="Barcha ma'lumotlarni JSON faylga saqlash">💾 Export JSON</button>
+        <button class="btn btn-danger btn-sm" id="import-json-btn" onclick="document.getElementById('import-file').click()" title="JSON fayldan ma'lumotlarni tiklash">📂 Import JSON</button>
+        <input type="file" id="import-file" style="display:none" accept=".json" onchange="importJSON(event)">
+        <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">🌙 Qora</button>
+        <button class="logout-btn" onclick="doLogout()">🚪 Chiqish</button>
+      </div>
+    </header>
+
+    <div class="app-body">
+
+      <!-- SIDEBAR -->
+      <nav>
+        <div class="nav-logo">⚙️ SANNUR OMS</div>
+        <button id="nav-dashboard" class="active" onclick="showTab('dashboard')">🏠 Dashboard</button>
+        <button id="nav-kirim" onclick="showTab('kirim')">📥 Kirim</button>
+        <button id="nav-chiqim" onclick="showTab('chiqim')">📤 Chiqim</button>
+        <button id="nav-mahsulot" onclick="showTab('mahsulot')">➕ Yangi mahsulot</button>
+        <button id="nav-tarix" onclick="showTab('tarix')">📋 Tarix</button>
+        <button id="nav-qoldiq" onclick="showTab('qoldiq')">📦 Qoldiq (Ombor)</button>
+        <button id="nav-usta" onclick="showTab('usta')">🔧 Ustalar</button>
+      </nav>
+
+      <!-- MAIN CONTENT -->
+      <main>
+
+        <!-- ===== DASHBOARD ===== -->
+        <div class="panel active" id="panel-dashboard">
+          <div class="dash-stats-grid">
+            <div class="dash-stat-card green">
+              <div class="label">Jami mahsulotlar</div>
+              <div class="value" id="dash-mahsulot">0</div>
+            </div>
+            <div class="dash-stat-card blue">
+              <div class="label">Klientlar</div>
+              <div class="value" id="dash-klient">0</div>
+            </div>
+            <div class="dash-stat-card orange">
+              <div class="label">Operatsiyalar</div>
+              <div class="value" id="dash-operatsiya">0</div>
+            </div>
+            <div class="dash-stat-card red">
+              <div class="label">Kam qolgan</div>
+              <div class="value" id="dash-kam">0</div>
+            </div>
+          </div>
+          <div class="dashboard-grid">
+            <div class="dash-card" onclick="showTab('kirim')">
+              <div class="icon">📥</div>
+              <div class="name">Kirim</div>
+              <div class="desc">Yangi tovar qabul qilish</div>
+            </div>
+            <div class="dash-card" onclick="showTab('chiqim')">
+              <div class="icon">📤</div>
+              <div class="name">Chiqim</div>
+              <div class="desc">Ustaga berish / chek</div>
+            </div>
+            <div class="dash-card" onclick="showTab('mahsulot')">
+              <div class="icon">➕</div>
+              <div class="name">Yangi mahsulot</div>
+              <div class="desc">Mahsulot ro'yxatiga qo'shish</div>
+            </div>
+            <div class="dash-card" onclick="showTab('tarix')">
+              <div class="icon">📋</div>
+              <div class="name">Tarix</div>
+              <div class="desc">Barcha operatsiyalar</div>
+            </div>
+            <div class="dash-card" onclick="showTab('qoldiq')">
+              <div class="icon">📦</div>
+              <div class="name">Qoldiq (Ombor)</div>
+              <div class="desc">Zaxira holati</div>
+            </div>
+            <div class="dash-card" onclick="showTab('usta')">
+              <div class="icon">🔧</div>
+              <div class="name">Ustalar</div>
+              <div class="desc">Usta boshqaruvi</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">🕒 So'nggi faoliyat</div>
+            <div class="activity-list" id="dash-recent">
+              <div class="empty">Hozircha yozuvlar yo'q</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== KIRIM PANELI ===== -->
+        <div class="panel" id="panel-kirim">
+          <div class="card">
+            <div class="card-title">📥 Yangi kelgan tovarlar — ma'lumotlar</div>
+            <div class="section-top">
+              <div class="form-grid">
+                <div class="form-group"><label>Sana</label><input type="date" id="k-sana"></div>
+                <div class="form-group"><label>Yetkazib beruvchi</label><input type="text" id="k-ism"
+                    placeholder="Yetkazib beruvchi nomi" list="yetkazib-list"><datalist id="yetkazib-list"></datalist>
+                </div>
+                <div class="form-group"><label>Kim olib kelgan</label><input type="text" id="k-tel"
+                    placeholder="Vakil ismi"></div>
+              </div>
+            </div>
+            <div style="margin-top:16px">
+              <div class="card-title" style="margin-bottom:10px">🔍 Mahsulot qidirish</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+                <div class="form-group" style="flex:1;min-width:200px">
+                  <label>Mahsulot nomi</label>
+                  <div class="mahsulot-input-row">
+                    <input type="text" id="k-mahsulot" placeholder="Nomi bo'yicha qidirish" list="mahsulot-list"
+                      oninput="mahsulotTanlandi('kirim')">
+                    <button class="scan-btn" onclick="openScanner('kirim')">📷</button>
+                  </div>
+                  <datalist id="mahsulot-list"></datalist>
+                  <div class="zaxira-info-wrap" id="k-zaxira-info">
+                    <div class="zi-dot" id="k-zi-dot"></div>
+                    <div>
+                      <div class="zi-label">Joriy zaxira</div>
+                      <div class="zi-num" id="k-zi-num">—</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group" style="min-width:200px">
+                  <label>Barkod</label>
+                  <div class="barkod-btn-row">
+                    <input type="text" id="k-barkod-search" placeholder="Barkod raqami">
+                    <button class="btn btn-outline btn-sm" onclick="barkodQidir('kirim')">🔍</button>
+                    <button class="new-prod-btn" onclick="toggleNewMahsulotPopover()">➕ Yangi mahsulot</button>
+                  </div>
+                </div>
+              </div>
+              <div class="new-mahsulot-popover" id="new-mahsulot-popover">
+                <div class="popover-title">➕ Yangi mahsulot qo'shish</div>
+                <div class="form-grid">
+                  <div class="form-group"><label>Mahsulot nomi *</label><input type="text" id="nm-nomi"
+                      placeholder="Nomi"></div>
+                  <div class="form-group"><label>Barkod</label><input type="text" id="nm-barkod"
+                      placeholder="Ixtiyoriy"></div>
+                  <div class="form-group"><label>O'lchov birligi</label><select id="nm-birlik">
+                      <option>dona</option>
+                      <option>metr</option>
+                      <option>kg</option>
+                      <option>litr</option>
+                      <option>paket</option>
+                    </select></div>
+                  <div class="form-group"><label>Boshlang'ich miqdor</label><input type="number" id="nm-boshlangich"
+                      placeholder="0" min="0" step="0.01" value="0"></div>
+                  <div class="form-group"><label>Minimal zaxira</label><input type="number" id="nm-minimal"
+                      placeholder="0" min="0" step="0.01" value="0"></div>
+                </div>
+                <div class="btn-row"><button class="btn btn-warning" onclick="saveNewMahsulotInline()">✅ Saqlash +
+                    Kirimga qo'shish</button><button class="btn btn-ghost btn-sm" onclick="toggleNewMahsulotPopover()">✕
+                    Yopish</button></div>
+              </div>
+              <div class="form-grid" style="margin-top:10px">
+                <div class="form-group"><label>Miqdori</label>
+                  <div class="unit-row"><input type="number" id="k-miqdor" placeholder="0" min="0" step="0.01"><select
+                      id="k-birlik">
+                      <option>dona</option>
+                      <option>metr</option>
+                      <option>kg</option>
+                    </select></div>
+                </div>
+                <div class="form-group"><label>Izoh</label><input type="text" id="k-izoh" placeholder="Ixtiyoriy"></div>
+              </div>
+              <div class="btn-row"><button class="btn btn-success" onclick="kirimJadvalgaQosh()">➕ Jadvalga
+                  qo'shish</button><button class="btn btn-ghost btn-sm" onclick="kirimFormTozala()">🗑️
+                  Tozalash</button></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">📋 Kirim jadvali</div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>№</th>
+                    <th>Mahsulot nomi</th>
+                    <th>Miqdori</th>
+                    <th>O'lchov birligi</th>
+                    <th>Amal</th>
+                  </tr>
+                </thead>
+                <tbody id="pending-kirim-tbody">
+                  <tr>
+                    <td colspan="5" class="empty">Jadval bo'sh</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="btn-row"><button class="btn btn-primary" onclick="commitKirimItems()">✅ Saqlash</button><button
+                class="btn btn-ghost" onclick="clearPendingKirim()">🗑️ Jadvalni tozalash</button></div>
+          </div>
+          <div class="card">
+            <div class="card-title">📜 Kirim tarixi (guruhlangan)</div>
+            <div id="kirim-history-list">
+              <div class="empty">Hozircha yo'q</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== CHIQIM PANELI ===== -->
+        <div class="panel" id="panel-chiqim">
+          <div class="card">
+            <div class="card-title">📤 Chiqim (klientga berish)</div>
+            <div class="section-top">
+              <div class="form-grid">
+                <div class="form-group"><label>Sana</label><input type="date" id="c-sana"></div>
+                <div class="form-group"><label>Usta (Kim olayapti) *</label><select id="c-usta">
+                    <option value="">-- Usta tanlang --</option>
+                  </select></div>
+                <div class="form-group"><label>Klient nomi</label><input type="text" id="c-klient"
+                    placeholder="Klient ismi"></div>
+              </div>
+            </div>
+            <div style="margin-top:16px">
+              <div class="card-title" style="margin-bottom:10px">🔍 Mahsulot qidirish</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+                <div class="form-group" style="flex:1;min-width:200px">
+                  <label>Mahsulot nomi</label>
+                  <div class="mahsulot-input-row">
+                    <input type="text" id="c-mahsulot" placeholder="Nomi bo'yicha qidirish" list="mahsulot-list2"
+                      oninput="mahsulotTanlandi('chiqim')">
+                    <button class="scan-btn" onclick="openScanner('chiqim')">📷</button>
+                  </div>
+                  <datalist id="mahsulot-list2"></datalist>
+                  <div class="zaxira-info-wrap" id="c-zaxira-info">
+                    <div class="zi-dot" id="c-zi-dot"></div>
+                    <div>
+                      <div class="zi-label">Joriy zaxira</div>
+                      <div class="zi-num" id="c-zi-num">—</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group" style="min-width:200px"><label>Barkod</label>
+                  <div style="display:flex;gap:7px"><input type="text" id="c-barkod-search"
+                      placeholder="Barkod raqami"><button class="btn btn-outline btn-sm"
+                      onclick="barkodQidir('chiqim')">🔍</button></div>
+                </div>
+              </div>
+              <div class="form-grid" style="margin-top:10px">
+                <div class="form-group"><label>Miqdori</label>
+                  <div class="unit-row"><input type="number" id="c-miqdor" placeholder="0" min="0" step="0.01"><select
+                      id="c-birlik">
+                      <option>dona</option>
+                      <option>metr</option>
+                      <option>kg</option>
+                    </select></div>
+                </div>
+                <div class="form-group"><label>Izoh</label><input type="text" id="c-izoh" placeholder="Ixtiyoriy"></div>
+              </div>
+              <div class="warn-note">⚠️ Chiqim miqdori joriy zaxiradan ko'p bo'lishi mumkin emas!</div>
+              <div class="btn-row"><button class="btn btn-warning" onclick="chiqimJadvalgaQosh()">➕ Jadvalga
+                  qo'shish</button><button class="btn btn-ghost btn-sm"
+                  onclick="setVal('c-mahsulot','');setVal('c-miqdor','');setVal('c-izoh','');document.getElementById('c-zaxira-info').classList.remove('visible')">🗑️
+                  Tozalash</button></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">📋 Chiqim jadvali</div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>№</th>
+                    <th>Mahsulot nomi</th>
+                    <th>Miqdori</th>
+                    <th>O'lchov birligi</th>
+                    <th>Amal</th>
+                  </tr>
+                </thead>
+                <tbody id="pending-chiqim-tbody">
+                  <tr>
+                    <td colspan="5" class="empty">Jadval bo'sh</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="btn-row"><button class="btn btn-primary" onclick="commitChiqimItems()">✅ Saqlash va Chek
+                chiqarish 🖨️</button><button class="btn btn-ghost" onclick="clearPendingChiqim()">🗑️ Jadvalni
+                tozalash</button></div>
+          </div>
+          <div class="card">
+            <div class="card-title">📜 Chiqim tarixi (guruhlangan)</div>
+            <div id="chiqim-history-list">
+              <div class="empty">Hozircha yo'q</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== YANGI MAHSULOT PANELI ===== -->
+        <div class="panel" id="panel-mahsulot">
+          <div class="card">
+            <div class="card-title">➕ Yangi mahsulot qo'shish</div>
+            <div class="form-grid">
+              <div class="form-group"><label>Mahsulot nomi *</label><input type="text" id="m-nom"
+                  placeholder="Masalan: Mix, Sim"></div>
+              <div class="form-group"><label>Shtrix kod</label><input type="text" id="m-barcode"
+                  placeholder="Avtomatik belgilanadi"></div>
+              <div class="form-group"><label>O'lchov birligi</label><select id="m-birlik">
+                  <option>dona</option>
+                  <option>metr</option>
+                  <option>kg</option>
+                </select></div>
+              <div class="form-group"><label>Boshlang'ich miqdor</label><input type="number" id="m-boshlangich"
+                  value="0" min="0" step="0.01"></div>
+              <div class="form-group"><label>Minimal zaxira</label><input type="number" id="m-min" placeholder="0"
+                  min="0" step="0.01"></div>
+            </div>
+            <div class="btn-row"><button class="btn btn-success" onclick="saveMahsulotPanel()">➕
+                Qo'shish</button><button class="btn btn-ghost btn-sm"
+                onclick="setVal('m-nom','');setVal('m-min','');setVal('m-boshlangich','0');setVal('m-barcode','')">🗑️
+                Tozalash</button></div>
+            <div class="info-note">💡 Mahsulot qo'shgandan so'ng uni Kirim yoki Qoldiq bo'limida ko'rishingiz mumkin.
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== TARIX PANELI ===== -->
+        <div class="panel" id="panel-tarix">
+          <div class="card">
+            <div class="card-title">📜 Barcha operatsiyalar</div>
+            <div class="filter-row">
+              <input type="text" id="search-input" placeholder="🔍 Qidirish (ism, mahsulot)" oninput="qidirish()">
+              <select id="filter-mahsulot" onchange="qidirish()">
+                <option value="">Barcha mahsulotlar</option>
+              </select>
+              <select id="filter-tur" onchange="qidirish()">
+                <option value="">Barcha (kirim/chiqim)</option>
+                <option value="kirim">Kirim</option>
+                <option value="chiqim">Chiqim</option>
+              </select>
+              <select id="filter-usta" onchange="qidirish()">
+                <option value="">Barcha ustalar</option>
+              </select>
+              <button class="btn btn-success btn-sm" onclick="excelExport()">📥 Excel</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Sana</th>
+                    <th>Tur</th>
+                    <th>Kim</th>
+                    <th>Mahsulot</th>
+                    <th>Oldingi</th>
+                    <th>Miqdor</th>
+                    <th>Yangi qoldiq</th>
+                    <th>Izoh</th>
+                    <th>O'chirish</th>
+                  </tr>
+                </thead>
+                <tbody id="tarix-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== QOLDIQ PANELI ===== -->
+        <div class="panel" id="panel-qoldiq">
+          <div class="card">
+            <div class="card-title">📦 Qoldiq (Ombor holati)</div>
+            <div class="search-row"><input type="text" id="qoldiq-search" placeholder="🔍 Mahsulot yoki barkod"
+                style="max-width:320px"></div>
+            <div id="qoldiq-grid" class="qoldiq-grid">
+              <div class="empty">Mahsulotlar yuklanmoqda...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== USTALAR PANELI ===== -->
+        <div class="panel" id="panel-usta">
+          <div class="card">
+            <div class="card-title">🔧 Ustalar</div>
+            <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+              <input type="text" id="new-usta-name" placeholder="Yangi usta ismi" style="flex:1;min-width:180px">
+              <button class="btn btn-success" onclick="addUsta()">➕ Qo'shish</button>
+            </div>
+            <div id="ustalar-list">
+              <div class="empty">Ustalar yuklanmoqda...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- USTA DETAIL PANEL -->
+        <div id="panel-usta-detail" style="display:none">
+          <div class="card">
+            <div class="back-btn" onclick="backToUstalar()">◀ Ustalar ro'yxatiga qaytish</div>
+            <div class="card-title" id="usta-detail-title">👤</div>
+            <div id="usta-detail-groups"></div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ===== MODALLAR ===== -->
+  <div class="modal-overlay" id="scanner-modal">
+    <div class="modal modal-sm"><button class="modal-close-btn" onclick="closeScanner()">✕</button>
+      <h3>📷 Shtrix kod skanerlash</h3>
+      <div id="qr-reader"></div>
+      <div id="scanner-status">Kamera tayyorlanmoqda...</div>
+      <div class="modal-actions"><button class="btn btn-ghost" onclick="closeScanner()">Yopish</button></div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal modal-sm">
+      <h3>⚠️ O'chirish</h3>
+      <p>Bu yozuvni o'chirishni xohlaysizmi? Bu amalni ortga qaytarib bo'lmaydi.</p>
+      <div class="modal-actions"><button class="btn btn-ghost" onclick="closeDeleteModal()">Bekor qilish</button><button
+          class="btn btn-danger" onclick="confirmDelete()">O'chirish</button></div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="new-mahsulot-modal">
+    <div class="modal"><button class="modal-close-btn" onclick="closeNewMahsulotModal()">✕</button>
+      <h3>➕ Yangi tovar qo'shish</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>Mahsulot nomi *</label><input type="text" id="nm-nom"
+            placeholder="Mahsulot nomi"></div>
+        <div class="form-group"><label>Barkod</label><input type="text" id="nm-barcode"
+            placeholder="Avtomatik belgilanadi"></div>
+        <div class="form-group"><label>O'lchov birligi</label><select id="nm-birlik">
+            <option>dona</option>
+            <option>metr</option>
+            <option>kg</option>
+          </select></div>
+        <div class="form-group"><label>Boshlang'ich miqdor</label><input type="number" id="nm-boshlangich" value="0"
+            min="0" step="0.01"></div>
+        <div class="form-group"><label>Minimal zaxira</label><input type="number" id="nm-min" placeholder="0" min="0"
+            step="0.01"></div>
+      </div>
+      <div class="modal-actions"><button class="btn btn-ghost" onclick="closeNewMahsulotModal()">Bekor
+          qilish</button><button class="btn btn-success" onclick="saveNewMahsulot()">✅ Saqlash</button></div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="qoldiq-edit-modal">
+    <div class="modal"><button class="modal-close-btn" onclick="closeQoldiqEdit()">✕</button>
+      <h3 id="edit-modal-title">✏️ Mahsulotni tahrirlash</h3><input type="hidden" id="edit-idx"><input type="hidden"
+        id="edit-joriy-qoldiq">
+      <div class="edit-qoldiq-info" id="edit-qoldiq-info-box">
+        <div class="eqi-row"><span class="eqi-label">Joriy qoldiq (tizimda)</span><span class="eqi-val"
+            id="edit-joriy-display">—</span></div>
+      </div>
+      <div class="form-grid" style="margin-top:14px">
+        <div class="form-group"><label>Mahsulot nomi *</label><input type="text" id="edit-nom"
+            placeholder="Mahsulot nomi"></div>
+        <div class="form-group"><label>O'lchov birligi</label><select id="edit-birlik">
+            <option>dona</option>
+            <option>metr</option>
+            <option>kg</option>
+            <option>litr</option>
+            <option>paket</option>
+          </select></div>
+        <div class="form-group"><label>Minimal zaxira</label><input type="number" id="edit-min" placeholder="0" min="0"
+            step="0.01"></div>
+        <div class="form-group"><label>Haqiqiy qoldiq (sanaganingiz) *</label><input type="number"
+            id="edit-yangi-qoldiq" placeholder="0" min="0" step="0.01" oninput="editQoldiqFarqHisob()"></div>
+      </div>
+      <div class="edit-farq-row" id="edit-farq-row" style="display:none"><span id="edit-farq-text"></span></div>
+      <div class="form-group" style="margin-top:14px"><label>Izoh * (sababini yozing)</label><input type="text"
+          id="edit-izoh" placeholder="Masalan: sanalandi, qayta tekshirildi..."></div>
+      <div class="modal-actions">
+        <button class="btn btn-danger" onclick="deleteMahsulotButunlay()" style="margin-right: auto;">🗑️ Butunlay o'chirish</button>
+        <button class="btn btn-ghost" onclick="closeQoldiqEdit()">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="saveQoldiqEdit()">✅ Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="app.js"></script>
+  <script>
+    // PWA o'rnatish
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('installBtn');
+      if (btn) btn.style.display = 'flex';
+    });
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((result) => {
+          if (result.outcome === 'accepted') toast('✅ Ilova o\'rnatildi!');
+          deferredPrompt = null;
+          const btn = document.getElementById('installBtn');
+          if (btn) btn.style.display = 'none';
+        });
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
+      });
+    }
+
+    // To'liq ma'lumotlarni Excel'ga eksport qilish
+    function fullDataExport() {
+      if (typeof XLSX === 'undefined') { toast('Excel kutubxonasi yuklanmadi!', 'error'); return; }
+      try {
+        const productRows = [['#', 'Mahsulot nomi', 'Birlik', 'Joriy qoldiq', 'Minimal zaxira', 'Shtrix kod', 'Qo\'shilgan sana', 'Boshlang\'ich miqdor']];
+        data.mahsulotlar.forEach((m, idx) => { const q = getJoriyZaxira(m.nom); productRows.push([idx + 1, m.nom || '', m.birlik || '', q, m.min || 0, m.barcode || '-', m.sana || '-', m.boshlangich || 0]); });
+        const yozuvRows = [['#', 'Sana', 'Tur', 'Kim', 'Telefon/Klient', 'Mahsulot', 'Oldingi zaxira', 'Miqdor', 'Birlik', 'Yangi qoldiq', 'Izoh', 'Vaqt']];
+        [...data.yozuvlar].reverse().forEach((r, idx) => { yozuvRows.push([idx + 1, r.sana || '', r.tur === 'kirim' ? 'Kirim' : 'Chiqim', r.ism || '', r.tel || '', r.mahsulot || '', (r.zaxira || 0) + ' ' + (r.zaxira_unit || ''), (r.tur === 'kirim' ? '+' : '-') + (r.miqdor || 0), r.birlik || '', (r.qoldiq || 0) + ' ' + (r.zaxira_unit || ''), r.izoh || '', r.vaqt ? new Date(r.vaqt).toLocaleString() : '']); });
+        const ustaRows = [['#', 'Usta ismi', 'Operatsiyalar soni']];
+        const ustaCounts = {}; data.yozuvlar.filter(r => r.tur === 'chiqim').forEach(r => { ustaCounts[r.ism] = (ustaCounts[r.ism] || 0) + 1; });
+        data.ustalar.forEach((u, idx) => { ustaRows.push([idx + 1, u, ustaCounts[u] || 0]); });
+        const qoldiqRows = [['#', 'Mahsulot nomi', 'Joriy qoldiq', 'Birlik', 'Minimal zaxira', 'Holati']];
+        data.mahsulotlar.forEach((m, idx) => { const q = getJoriyZaxira(m.nom); const min = m.min || 0; let h = q <= 0 ? '⛔ TUGAGAN' : q <= min ? '⚠️ KAM' : '✅ YETARLI'; qoldiqRows.push([idx + 1, m.nom, q, m.birlik, min, h]); });
+        const wb = XLSX.utils.book_new();
+        const ws1 = XLSX.utils.aoa_to_sheet(productRows); ws1['!cols'] = [{ wch: 5 }, { wch: 25 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 12 }, { wch: 14 }];
+        const ws2 = XLSX.utils.aoa_to_sheet(yozuvRows); ws2['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 8 }, { wch: 18 }, { wch: 15 }, { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 25 }, { wch: 18 }];
+        const ws3 = XLSX.utils.aoa_to_sheet(ustaRows); ws3['!cols'] = [{ wch: 5 }, { wch: 20 }, { wch: 15 }];
+        const ws4 = XLSX.utils.aoa_to_sheet(qoldiqRows); ws4['!cols'] = [{ wch: 5 }, { wch: 25 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 12 }];
+        XLSX.utils.book_append_sheet(wb, ws1, 'Mahsulotlar'); XLSX.utils.book_append_sheet(wb, ws2, 'Operatsiyalar'); XLSX.utils.book_append_sheet(wb, ws3, 'Ustalar'); XLSX.utils.book_append_sheet(wb, ws4, 'Qoldiq hisoboti');
+        XLSX.writeFile(wb, `SANNUR_ombor_malumotlari_${today()}.xlsx`);
+        toast('📥 Barcha ma\'lumotlar yuklab olindi!');
+      } catch (err) { toast('❌ Xatolik yuz berdi!', 'error'); }
+    }
+  </script>
+</body>
+
+</html>
