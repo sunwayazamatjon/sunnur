@@ -16,7 +16,7 @@ git remote add origin https://github.com/sunwayazamatjon/sunnur.git
 git add .
 
 :: 4. Commit qilish
-git commit -m "Fix: Folder structure and added data persistence (Firebase + LocalStorage)"
+git commit -m "Update: Added Kirim prices, payment types, and Obyektlar management system"
 
 :: 5. GitHub'ga push qilish (Force push orqali eski noto'g'ri strukturani o'chiramiz)
 echo GitHub'ga yuborilmoqda...
