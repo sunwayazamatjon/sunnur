@@ -87,8 +87,11 @@
         <div class="user-badge" id="user-badge"><span id="user-badge-text">—</span></div>
         <button class="install-btn" id="installBtn" style="display:none" onclick="installPWA()">📲 O'rnatish</button>
         <button class="download-btn" onclick="fullDataExport()" title="Excel'ga yuklab olish">📥 Excel</button>
-        <button class="btn btn-warning btn-sm" onclick="exportJSON()" title="Barcha ma'lumotlarni JSON faylga saqlash">💾 Export JSON</button>
-        <button class="btn btn-danger btn-sm" id="import-json-btn" onclick="document.getElementById('import-file').click()" title="JSON fayldan ma'lumotlarni tiklash">📂 Import JSON</button>
+        <button class="btn btn-warning btn-sm" onclick="exportJSON()"
+          title="Barcha ma'lumotlarni JSON faylga saqlash">💾 Export JSON</button>
+        <button class="btn btn-danger btn-sm" id="import-json-btn"
+          onclick="document.getElementById('import-file').click()" title="JSON fayldan ma'lumotlarni tiklash">📂 Import
+          JSON</button>
         <input type="file" id="import-file" style="display:none" accept=".json" onchange="importJSON(event)">
         <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">🌙 Qora</button>
         <button class="logout-btn" onclick="doLogout()">🚪 Chiqish</button>
@@ -245,27 +248,33 @@
               </div>
               <div class="form-grid" style="margin-top:10px">
                 <div class="form-group"><label>Miqdori</label>
-                  <div class="unit-row"><input type="number" id="k-miqdor" placeholder="0" min="0" step="0.01" oninput="kirimSummaHisob()"><select
-                      id="k-birlik">
+                  <div class="unit-row"><input type="number" id="k-miqdor" placeholder="0" min="0" step="0.01"
+                      oninput="kirimSummaHisob()"><select id="k-birlik">
                       <option>dona</option>
                       <option>metr</option>
                       <option>kg</option>
                     </select></div>
                 </div>
-                <div class="form-group"><label>Tannarxi</label><input type="number" id="k-narx" placeholder="0" min="0" step="0.01" oninput="kirimSummaHisob()"></div>
+                <div class="form-group"><label>Tannarxi</label><input type="number" id="k-narx" placeholder="0" min="0"
+                    step="0.01" oninput="kirimSummaHisob()"></div>
                 <div class="form-group"><label>Jami summa</label>
-                  <div id="k-jami-summa" style="font-weight:700; font-family:var(--mono); padding: 0.6rem; background:var(--bg); border:1px solid var(--border); border-radius:6px; height: 42px; display: flex; align-items: center;">0</div>
+                  <div id="k-jami-summa"
+                    style="font-weight:700; font-family:var(--mono); padding: 0.6rem; background:var(--bg); border:1px solid var(--border); border-radius:6px; height: 42px; display: flex; align-items: center;">
+                    0</div>
                 </div>
                 <div class="form-group"><label>Izoh</label><input type="text" id="k-izoh" placeholder="Ixtiyoriy"></div>
               </div>
               <div class="form-group" style="margin-top:10px">
                 <label>To'lov turi</label>
                 <div style="display:flex; gap:20px; padding: 10px 0;">
-                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="k-tulov" value="naqd" checked> 💵 Naqd</label>
-                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="k-tulov" value="qarz"> 💳 Qarz</label>
+                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio"
+                      name="k-tulov" value="naqd" checked> 💵 Naqd</label>
+                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio"
+                      name="k-tulov" value="qarz"> 💳 Qarz</label>
                 </div>
               </div>
-              <div class="btn-row btn-row-space"><button class="btn btn-success" onclick="kirimJadvalgaQosh()">➕ Jadvalga
+              <div class="btn-row btn-row-space"><button class="btn btn-success" onclick="kirimJadvalgaQosh()">➕
+                  Jadvalga
                   qo'shish</button><button class="btn btn-ghost btn-sm" onclick="kirimFormTozala()">🗑️
                   Tozalash</button></div>
             </div>
@@ -291,11 +300,13 @@
                 </tbody>
               </table>
             </div>
-            <div id="kirim-total-box" style="margin-top:10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.1); color: var(--success); font-weight: 700; font-family: var(--mono); text-align: right; display:none;">
+            <div id="kirim-total-box"
+              style="margin-top:10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.1); color: var(--success); font-weight: 700; font-family: var(--mono); text-align: right; display:none;">
               JAMI: <span id="k-overall-total">0</span> so'm
             </div>
-            <div class="btn-row btn-row-space"><button class="btn btn-primary" onclick="commitKirimItems()">✅ Saqlash</button><button
-                class="btn btn-ghost" onclick="clearPendingKirim()">🗑️ Jadvalni tozalash</button></div>
+            <div class="btn-row btn-row-space"><button class="btn btn-primary" onclick="commitKirimItems()">✅
+                Saqlash</button><button class="btn btn-ghost" onclick="clearPendingKirim()">🗑️ Jadvalni
+                tozalash</button></div>
           </div>
           <div class="card">
             <div class="card-title">📜 Kirim tarixi (guruhlangan)</div>
@@ -348,21 +359,25 @@
               </div>
               <div class="form-grid" style="margin-top:10px">
                 <div class="form-group"><label>Miqdori</label>
-                  <div class="unit-row"><input type="number" id="c-miqdor" placeholder="0" min="0" step="0.01" oninput="chiqimSummaHisob()"><select
-                      id="c-birlik">
+                  <div class="unit-row"><input type="number" id="c-miqdor" placeholder="0" min="0" step="0.01"
+                      oninput="chiqimSummaHisob()"><select id="c-birlik">
                       <option>dona</option>
                       <option>metr</option>
                       <option>kg</option>
                     </select></div>
                 </div>
-                <div class="form-group"><label>Narxi</label><input type="number" id="c-narx" placeholder="0" min="0" step="0.01" oninput="chiqimSummaHisob()"></div>
+                <div class="form-group"><label>Narxi</label><input type="number" id="c-narx" placeholder="0" min="0"
+                    step="0.01" oninput="chiqimSummaHisob()"></div>
                 <div class="form-group"><label>Jami summa</label>
-                  <div id="c-jami-summa" style="font-weight:700; font-family:var(--mono); padding: 0.6rem; background:var(--bg); border:1px solid var(--border); border-radius:6px; height: 42px; display: flex; align-items: center;">0</div>
+                  <div id="c-jami-summa"
+                    style="font-weight:700; font-family:var(--mono); padding: 0.6rem; background:var(--bg); border:1px solid var(--border); border-radius:6px; height: 42px; display: flex; align-items: center;">
+                    0</div>
                 </div>
                 <div class="form-group"><label>Izoh</label><input type="text" id="c-izoh" placeholder="Ixtiyoriy"></div>
               </div>
               <div class="warn-note">⚠️ Chiqim miqdori joriy zaxiradan ko'p bo'lishi mumkin emas!</div>
-              <div class="btn-row btn-row-space"><button class="btn btn-warning" onclick="chiqimJadvalgaQosh()">➕ Jadvalga
+              <div class="btn-row btn-row-space"><button class="btn btn-warning" onclick="chiqimJadvalgaQosh()">➕
+                  Jadvalga
                   qo'shish</button><button class="btn btn-ghost btn-sm"
                   onclick="setVal('c-mahsulot','');setVal('c-miqdor','');setVal('c-izoh','');document.getElementById('c-zaxira-info').classList.remove('visible')">🗑️
                   Tozalash</button></div>
@@ -389,7 +404,8 @@
                 </tbody>
               </table>
             </div>
-            <div class="btn-row btn-row-space"><button class="btn btn-primary" onclick="commitChiqimItems()">✅ Saqlash va Chek
+            <div class="btn-row btn-row-space"><button class="btn btn-primary" onclick="commitChiqimItems()">✅ Saqlash
+                va Chek
                 chiqarish 🖨️</button><button class="btn btn-ghost" onclick="clearPendingChiqim()">🗑️ Jadvalni
                 tozalash</button></div>
           </div>
@@ -594,7 +610,8 @@
       <div class="form-group" style="margin-top:14px"><label>Izoh * (sababini yozing)</label><input type="text"
           id="edit-izoh" placeholder="Masalan: sanalandi, qayta tekshirildi..."></div>
       <div class="modal-actions">
-        <button class="btn btn-danger" onclick="deleteMahsulotButunlay()" style="margin-right: auto;">🗑️ Butunlay o'chirish</button>
+        <button class="btn btn-danger" onclick="deleteMahsulotButunlay()" style="margin-right: auto;">🗑️ Butunlay
+          o'chirish</button>
         <button class="btn btn-ghost" onclick="closeQoldiqEdit()">Bekor qilish</button>
         <button class="btn btn-primary" onclick="saveQoldiqEdit()">✅ Saqlash</button>
       </div>
