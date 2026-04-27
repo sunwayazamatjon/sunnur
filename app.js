@@ -418,31 +418,40 @@ function chiqimJadvalgaQosh() {
 }
 
 function renderPending(type) {
+  const arr = type === 'kirim' ? pendingKirim : pendingChiqim;
+  const tbody = document.getElementById(`pending-${type}-tbody`);
+  if(!tbody) return;
+  tbody.innerHTML = '';
   let total = 0;
-  arr.forEach((item, idx) => {
-    const tr = document.createElement('tr');
-    if(type === 'kirim') {
-      total += item.jami;
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td><strong>${item.nom}</strong></td>
-        <td>${item.narx.toLocaleString()}</td>
-        <td style="font-family:var(--mono)">${item.miqdor} ${item.birlik}</td>
-        <td style="font-family:var(--mono); font-weight:700">${item.jami.toLocaleString()}</td>
-        <td><button class="btn btn-ghost btn-sm" onclick="removePending('${type}', ${idx})">🗑️</button></td>
-      `;
-    } else {
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td><strong>${item.nom}</strong></td>
-        <td style="font-family:var(--mono)">${item.miqdor} ${item.birlik}</td>
-        <td>${item.narx.toLocaleString()}</td>
-        <td style="font-family:var(--mono); font-weight:700">${item.jami.toLocaleString()}</td>
-        <td><button class="btn btn-ghost btn-sm" onclick="removePending('${type}', ${idx})">🗑️</button></td>
-      `;
-    }
-    tbody.appendChild(tr);
-  });
+  if(arr.length === 0) {
+    const colCount = type === 'kirim' ? 6 : 6;
+    tbody.innerHTML = `<tr><td colspan="${colCount}" class="empty">Jadval bo'sh</td></tr>`;
+  } else {
+    arr.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+      if(type === 'kirim') {
+        total += item.jami;
+        tr.innerHTML = `
+          <td>${idx+1}</td>
+          <td><strong>${item.nom}</strong></td>
+          <td>${item.narx.toLocaleString()}</td>
+          <td style="font-family:var(--mono)">${item.miqdor} ${item.birlik}</td>
+          <td style="font-family:var(--mono); font-weight:700">${item.jami.toLocaleString()}</td>
+          <td><button class="btn btn-ghost btn-sm" onclick="removePending('${type}', ${idx})">🗑️</button></td>
+        `;
+      } else {
+        tr.innerHTML = `
+          <td>${idx+1}</td>
+          <td><strong>${item.nom}</strong></td>
+          <td style="font-family:var(--mono)">${item.miqdor} ${item.birlik}</td>
+          <td>${item.narx.toLocaleString()}</td>
+          <td style="font-family:var(--mono); font-weight:700">${item.jami.toLocaleString()}</td>
+          <td><button class="btn btn-ghost btn-sm" onclick="removePending('${type}', ${idx})">🗑️</button></td>
+        `;
+      }
+      tbody.appendChild(tr);
+    });
+  }
 
   if(type === 'kirim') {
     const totalBox = document.getElementById('kirim-total-box');
