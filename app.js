@@ -1,4 +1,4 @@
-unda /** 
+/** 
  * SANNUR OMS - Asosiy mantiqiy kod (app.js)
  * Firebase Realtime Database orqali ishlaydi.
  */
