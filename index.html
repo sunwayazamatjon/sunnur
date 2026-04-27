@@ -106,6 +106,7 @@
         <button id="nav-mahsulot" onclick="showTab('mahsulot')">➕ Yangi mahsulot</button>
         <button id="nav-tarix" onclick="showTab('tarix')">📋 Tarix</button>
         <button id="nav-qoldiq" onclick="showTab('qoldiq')">📦 Qoldiq (Ombor)</button>
+        <button id="nav-obyekt" onclick="showTab('obyekt')">🏗️ Obyektlar</button>
         <button id="nav-usta" onclick="showTab('usta')">🔧 Ustalar</button>
       </nav>
 
@@ -157,6 +158,11 @@
               <div class="icon">📦</div>
               <div class="name">Qoldiq (Ombor)</div>
               <div class="desc">Zaxira holati</div>
+            </div>
+            <div class="dash-card" onclick="showTab('obyekt')">
+              <div class="icon">🏗️</div>
+              <div class="name">Obyektlar</div>
+              <div class="desc">Obyektlar bo'yicha chiqimlar</div>
             </div>
             <div class="dash-card" onclick="showTab('usta')">
               <div class="icon">🔧</div>
@@ -239,16 +245,27 @@
               </div>
               <div class="form-grid" style="margin-top:10px">
                 <div class="form-group"><label>Miqdori</label>
-                  <div class="unit-row"><input type="number" id="k-miqdor" placeholder="0" min="0" step="0.01"><select
+                  <div class="unit-row"><input type="number" id="k-miqdor" placeholder="0" min="0" step="0.01" oninput="kirimSummaHisob()"><select
                       id="k-birlik">
                       <option>dona</option>
                       <option>metr</option>
                       <option>kg</option>
                     </select></div>
                 </div>
+                <div class="form-group"><label>Tannarxi</label><input type="number" id="k-narx" placeholder="0" min="0" step="0.01" oninput="kirimSummaHisob()"></div>
+                <div class="form-group"><label>Jami summa</label>
+                  <div id="k-jami-summa" style="font-weight:700; font-family:var(--mono); padding: 0.6rem; background:var(--bg); border:1px solid var(--border); border-radius:6px; height: 42px; display: flex; align-items: center;">0</div>
+                </div>
                 <div class="form-group"><label>Izoh</label><input type="text" id="k-izoh" placeholder="Ixtiyoriy"></div>
               </div>
-              <div class="btn-row"><button class="btn btn-success" onclick="kirimJadvalgaQosh()">➕ Jadvalga
+              <div class="form-group" style="margin-top:10px">
+                <label>To'lov turi</label>
+                <div style="display:flex; gap:20px; padding: 10px 0;">
+                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="k-tulov" value="naqd" checked> 💵 Naqd</label>
+                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="k-tulov" value="qarz"> 💳 Qarz</label>
+                </div>
+              </div>
+              <div class="btn-row btn-row-space"><button class="btn btn-success" onclick="kirimJadvalgaQosh()">➕ Jadvalga
                   qo'shish</button><button class="btn btn-ghost btn-sm" onclick="kirimFormTozala()">🗑️
                   Tozalash</button></div>
             </div>
@@ -261,19 +278,23 @@
                   <tr>
                     <th>№</th>
                     <th>Mahsulot nomi</th>
+                    <th>Tannarxi</th>
                     <th>Miqdori</th>
-                    <th>O'lchov birligi</th>
+                    <th>Jami</th>
                     <th>Amal</th>
                   </tr>
                 </thead>
                 <tbody id="pending-kirim-tbody">
                   <tr>
-                    <td colspan="5" class="empty">Jadval bo'sh</td>
+                    <td colspan="6" class="empty">Jadval bo'sh</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <div class="btn-row"><button class="btn btn-primary" onclick="commitKirimItems()">✅ Saqlash</button><button
+            <div id="kirim-total-box" style="margin-top:10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.1); color: var(--success); font-weight: 700; font-family: var(--mono); text-align: right; display:none;">
+              JAMI: <span id="k-overall-total">0</span> so'm
+            </div>
+            <div class="btn-row btn-row-space"><button class="btn btn-primary" onclick="commitKirimItems()">✅ Saqlash</button><button
                 class="btn btn-ghost" onclick="clearPendingKirim()">🗑️ Jadvalni tozalash</button></div>
           </div>
           <div class="card">
@@ -294,6 +315,8 @@
                 <div class="form-group"><label>Usta (Kim olayapti) *</label><select id="c-usta">
                     <option value="">-- Usta tanlang --</option>
                   </select></div>
+                <div class="form-group"><label>Obyekt nomi *</label><input type="text" id="c-obyekt"
+                    placeholder="Obyekt yoki joy nomi" list="obyekt-list"><datalist id="obyekt-list"></datalist></div>
                 <div class="form-group"><label>Klient nomi</label><input type="text" id="c-klient"
                     placeholder="Klient ismi"></div>
               </div>
@@ -325,17 +348,21 @@
               </div>
               <div class="form-grid" style="margin-top:10px">
                 <div class="form-group"><label>Miqdori</label>
-                  <div class="unit-row"><input type="number" id="c-miqdor" placeholder="0" min="0" step="0.01"><select
+                  <div class="unit-row"><input type="number" id="c-miqdor" placeholder="0" min="0" step="0.01" oninput="chiqimSummaHisob()"><select
                       id="c-birlik">
                       <option>dona</option>
                       <option>metr</option>
                       <option>kg</option>
                     </select></div>
                 </div>
+                <div class="form-group"><label>Narxi</label><input type="number" id="c-narx" placeholder="0" min="0" step="0.01" oninput="chiqimSummaHisob()"></div>
+                <div class="form-group"><label>Jami summa</label>
+                  <div id="c-jami-summa" style="font-weight:700; font-family:var(--mono); padding: 0.6rem; background:var(--bg); border:1px solid var(--border); border-radius:6px; height: 42px; display: flex; align-items: center;">0</div>
+                </div>
                 <div class="form-group"><label>Izoh</label><input type="text" id="c-izoh" placeholder="Ixtiyoriy"></div>
               </div>
               <div class="warn-note">⚠️ Chiqim miqdori joriy zaxiradan ko'p bo'lishi mumkin emas!</div>
-              <div class="btn-row"><button class="btn btn-warning" onclick="chiqimJadvalgaQosh()">➕ Jadvalga
+              <div class="btn-row btn-row-space"><button class="btn btn-warning" onclick="chiqimJadvalgaQosh()">➕ Jadvalga
                   qo'shish</button><button class="btn btn-ghost btn-sm"
                   onclick="setVal('c-mahsulot','');setVal('c-miqdor','');setVal('c-izoh','');document.getElementById('c-zaxira-info').classList.remove('visible')">🗑️
                   Tozalash</button></div>
@@ -350,7 +377,8 @@
                     <th>№</th>
                     <th>Mahsulot nomi</th>
                     <th>Miqdori</th>
-                    <th>O'lchov birligi</th>
+                    <th>Narxi</th>
+                    <th>Jami</th>
                     <th>Amal</th>
                   </tr>
                 </thead>
@@ -361,7 +389,7 @@
                 </tbody>
               </table>
             </div>
-            <div class="btn-row"><button class="btn btn-primary" onclick="commitChiqimItems()">✅ Saqlash va Chek
+            <div class="btn-row btn-row-space"><button class="btn btn-primary" onclick="commitChiqimItems()">✅ Saqlash va Chek
                 chiqarish 🖨️</button><button class="btn btn-ghost" onclick="clearPendingChiqim()">🗑️ Jadvalni
                 tozalash</button></div>
           </div>
@@ -392,7 +420,7 @@
               <div class="form-group"><label>Minimal zaxira</label><input type="number" id="m-min" placeholder="0"
                   min="0" step="0.01"></div>
             </div>
-            <div class="btn-row"><button class="btn btn-success" onclick="saveMahsulotPanel()">➕
+            <div class="btn-row btn-row-space"><button class="btn btn-success" onclick="saveMahsulotPanel()">➕
                 Qo'shish</button><button class="btn btn-ghost btn-sm"
                 onclick="setVal('m-nom','');setVal('m-min','');setVal('m-boshlangich','0');setVal('m-barcode','')">🗑️
                 Tozalash</button></div>
@@ -451,6 +479,25 @@
             <div id="qoldiq-grid" class="qoldiq-grid">
               <div class="empty">Mahsulotlar yuklanmoqda...</div>
             </div>
+          </div>
+        </div>
+
+        <!-- ===== OBYEKTLAR PANELI ===== -->
+        <div class="panel" id="panel-obyekt">
+          <div class="card">
+            <div class="card-title">🏗️ Obyektlar</div>
+            <div id="obyekt-grid" class="obyekt-grid">
+              <div class="empty">Obyektlar yuklanmoqda...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OBYEKT DETAIL PANEL -->
+        <div id="panel-obyekt-detail" style="display:none">
+          <div class="card">
+            <div class="back-btn" onclick="backToObyektlar()">◀ Obyektlar ro'yxatiga qaytish</div>
+            <div class="card-title" id="obyekt-detail-title">🏗️</div>
+            <div id="obyekt-detail-content"></div>
           </div>
         </div>
 

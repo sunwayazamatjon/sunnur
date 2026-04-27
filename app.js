@@ -1,4 +1,4 @@
-/** 
+unda /** 
  * SANNUR OMS - Asosiy mantiqiy kod (app.js)
  * Firebase Realtime Database orqali ishlaydi.
  */
@@ -164,6 +164,7 @@ function showTab(tabId) {
   if(tabId === 'qoldiq') renderQoldiq();
   if(tabId === 'tarix') renderTarix();
   if(tabId === 'usta') renderUstalar();
+  if(tabId === 'obyekt') renderObyektlar();
   
   // Dashboardga o'tilganda activity ro'yxatini yangilash
   if(tabId === 'dashboard') updateDashboardRecent();
@@ -286,6 +287,7 @@ function updateDatalists() {
   const mList1 = document.getElementById('mahsulot-list');
   const mList2 = document.getElementById('mahsulot-list2');
   const uList = document.getElementById('c-usta');
+  const oList = document.getElementById('obyekt-list');
   const fList1 = document.getElementById('filter-mahsulot');
   const fList2 = document.getElementById('filter-usta');
   
@@ -304,6 +306,12 @@ function updateDatalists() {
     uList.innerHTML = '<option value="">-- Usta tanlang --</option>';
     data.ustalar.forEach(u => uList.innerHTML += `<option value="${u}">${u}</option>`);
   }
+  if(oList) {
+    oList.innerHTML = '';
+    const obs = new Set();
+    data.yozuvlar.forEach(y => { if(y.obyekt) obs.add(y.obyekt); });
+    obs.forEach(o => oList.innerHTML += `<option value="${o}">`);
+  }
   if(fList2) {
     fList2.innerHTML = '<option value="">Barcha ustalar</option>';
     data.ustalar.forEach(u => fList2.innerHTML += `<option value="${u}">${u}</option>`);
@@ -316,6 +324,7 @@ function refreshAllDataViews() {
   renderQoldiq();
   updateDashboardRecent();
   renderUstalar();
+  renderObyektlar();
 }
 
 // ================= KIRIM / CHIQIM FUNKSIYALARI =================
@@ -342,6 +351,12 @@ function mahsulotTanlandi(type) {
   }
 }
 
+function chiqimSummaHisob() {
+  const miq = parseFloat(document.getElementById('c-miqdor').value) || 0;
+  const narx = parseFloat(document.getElementById('c-narx').value) || 0;
+  document.getElementById('c-jami-summa').innerText = (miq * narx).toLocaleString() + " so'm";
+}
+
 function barkodQidir(type) {
   const qPref = type === 'kirim' ? 'k' : 'c';
   const bc = document.getElementById(`${qPref}-barkod-search`).value.trim();
@@ -357,9 +372,16 @@ function barkodQidir(type) {
   }
 }
 
+function kirimSummaHisob() {
+  const miq = parseFloat(document.getElementById('k-miqdor').value) || 0;
+  const narx = parseFloat(document.getElementById('k-narx').value) || 0;
+  document.getElementById('k-jami-summa').innerText = (miq * narx).toLocaleString() + " so'm";
+}
+
 function kirimJadvalgaQosh() {
   const nom = document.getElementById('k-mahsulot').value;
   const miq = parseFloat(document.getElementById('k-miqdor').value);
+  const narx = parseFloat(document.getElementById('k-narx').value) || 0;
   const bir = document.getElementById('k-birlik').value;
   const izh = document.getElementById('k-izoh').value;
   
@@ -370,15 +392,17 @@ function kirimJadvalgaQosh() {
     toast("Mahsulot ro'yxatda yo'q. Oldin 'Yangi mahsulot' qo'shing!", "warn"); return;
   }
   
-  pendingKirim.push({ nom, miqdor: miq, birlik: bir, izoh: izh });
+  pendingKirim.push({ nom, miqdor: miq, narx, jami: miq * narx, birlik: bir, izoh: izh });
   renderPending('kirim');
-  ['k-mahsulot','k-miqdor','k-izoh'].forEach(id => setVal(id, ''));
+  ['k-mahsulot','k-miqdor','k-narx','k-izoh'].forEach(id => setVal(id, ''));
+  document.getElementById('k-jami-summa').innerText = "0 so'm";
   document.getElementById('k-zaxira-info').classList.remove('visible');
 }
 
 function chiqimJadvalgaQosh() {
   const nom = document.getElementById('c-mahsulot').value;
   const miq = parseFloat(document.getElementById('c-miqdor').value);
+  const narx = parseFloat(document.getElementById('c-narx').value) || 0;
   const bir = document.getElementById('c-birlik').value;
   const izh = document.getElementById('c-izoh').value;
   
@@ -386,34 +410,48 @@ function chiqimJadvalgaQosh() {
   const qol = getJoriyZaxira(nom);
   if(miq > qol) { toast(`Zaxirada yetarli emas! Faqat ${qol} bor.`, "error"); return; }
   
-  pendingChiqim.push({ nom, miqdor: miq, birlik: bir, izoh: izh });
+  pendingChiqim.push({ nom, miqdor: miq, narx, jami: miq * narx, birlik: bir, izoh: izh });
   renderPending('chiqim');
-  ['c-mahsulot','c-miqdor','c-izoh'].forEach(id => setVal(id, ''));
+  ['c-mahsulot','c-miqdor','c-narx','c-izoh'].forEach(id => setVal(id, ''));
+  document.getElementById('c-jami-summa').innerText = "0 so'm";
   document.getElementById('c-zaxira-info').classList.remove('visible');
 }
 
 function renderPending(type) {
-  const arr = type === 'kirim' ? pendingKirim : pendingChiqim;
-  const tbody = document.getElementById(`pending-${type}-tbody`);
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  
-  if(arr.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty">Jadval bo\'sh</td></tr>';
-    return;
-  }
-  
+  let total = 0;
   arr.forEach((item, idx) => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${idx+1}</td>
-      <td><strong>${item.nom}</strong></td>
-      <td style="font-family:var(--mono)">${item.miqdor}</td>
-      <td>${item.birlik}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="removePending('${type}', ${idx})">🗑️</button></td>
-    `;
+    if(type === 'kirim') {
+      total += item.jami;
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td><strong>${item.nom}</strong></td>
+        <td>${item.narx.toLocaleString()}</td>
+        <td style="font-family:var(--mono)">${item.miqdor} ${item.birlik}</td>
+        <td style="font-family:var(--mono); font-weight:700">${item.jami.toLocaleString()}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="removePending('${type}', ${idx})">🗑️</button></td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td><strong>${item.nom}</strong></td>
+        <td style="font-family:var(--mono)">${item.miqdor} ${item.birlik}</td>
+        <td>${item.narx.toLocaleString()}</td>
+        <td style="font-family:var(--mono); font-weight:700">${item.jami.toLocaleString()}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="removePending('${type}', ${idx})">🗑️</button></td>
+      `;
+    }
     tbody.appendChild(tr);
   });
+
+  if(type === 'kirim') {
+    const totalBox = document.getElementById('kirim-total-box');
+    const overallSpan = document.getElementById('k-overall-total');
+    if(totalBox && overallSpan) {
+      totalBox.style.display = arr.length > 0 ? 'block' : 'none';
+      overallSpan.innerText = total.toLocaleString();
+    }
+  }
 }
 
 function removePending(type, idx) {
@@ -432,13 +470,15 @@ function commitKirimItems() {
   const sana = document.getElementById('k-sana').value;
   const ism = document.getElementById('k-ism').value || 'Noma\'lum yetkazuvchi';
   const tel = document.getElementById('k-tel').value;
+  const tulov = document.querySelector('input[name="k-tulov"]:checked').value;
   
   pendingKirim.forEach(item => {
     const prevQ = getJoriyZaxira(item.nom);
     const m = data.mahsulotlar.find(x => x.nom === item.nom);
     const newYozuv = {
       id: Date.now() + Math.random(), sana, vaqt: new Date().toISOString(), tur: 'kirim',
-      ism, tel, mahsulot: item.nom, miqdor: item.miqdor, birlik: item.birlik, zaxira: prevQ, zaxira_unit: m?m.birlik:'', qoldiq: prevQ + item.miqdor, izoh: item.izoh
+      ism, tel, mahsulot: item.nom, miqdor: item.miqdor, narx: item.narx, jami: item.jami,
+      tulov, birlik: item.birlik, zaxira: prevQ, zaxira_unit: m?m.birlik:'', qoldiq: prevQ + item.miqdor, izoh: item.izoh
     };
     data.yozuvlar.push(newYozuv);
   });
@@ -453,21 +493,24 @@ function commitChiqimItems() {
   
   const sana = document.getElementById('c-sana').value;
   const usta = document.getElementById('c-usta').value;
+  const obyekt = document.getElementById('c-obyekt').value.trim();
   const klient = document.getElementById('c-klient').value;
   
   if(!usta) { toast("Ustani tanlang!", "error"); document.getElementById('c-usta').focus(); return; }
+  if(!obyekt) { toast("Obyekt nomini kiriting!", "error"); document.getElementById('c-obyekt').focus(); return; }
   
   pendingChiqim.forEach(item => {
     const prevQ = getJoriyZaxira(item.nom);
     const m = data.mahsulotlar.find(x => x.nom === item.nom);
     const newYozuv = {
       id: Date.now() + Math.random(), sana, vaqt: new Date().toISOString(), tur: 'chiqim',
-      ism: usta, tel: klient, mahsulot: item.nom, miqdor: item.miqdor, birlik: item.birlik, zaxira: prevQ, zaxira_unit: m?m.birlik:'', qoldiq: prevQ - item.miqdor, izoh: item.izoh
+      ism: usta, obyekt, tel: klient, mahsulot: item.nom, miqdor: item.miqdor, narx: item.narx, jami: item.jami,
+      birlik: item.birlik, zaxira: prevQ, zaxira_unit: m?m.birlik:'', qoldiq: prevQ - item.miqdor, izoh: item.izoh
     };
     data.yozuvlar.push(newYozuv);
   });
   
-  saveData(); clearPendingChiqim(); setVal('c-klient', '');
+  saveData(); clearPendingChiqim(); setVal('c-klient', ''); setVal('c-obyekt', '');
   toast("✅ Chiqim saqlandi (Chek chop etildi)", "success");
 }
 
@@ -731,6 +774,80 @@ function backToUstalar() {
   document.getElementById('panel-usta-detail').style.display = 'none';
   document.getElementById('panel-usta').classList.add('active');
   renderUstalar();
+}
+
+// ================= OBYEKTLAR =================
+function renderObyektlar() {
+  const container = document.getElementById('obyekt-grid');
+  if(!container) return;
+  container.innerHTML = '';
+  
+  const obs = {};
+  data.yozuvlar.forEach(y => {
+    if(y.tur === 'chiqim' && y.obyekt) {
+      if(!obs[y.obyekt]) obs[y.obyekt] = { nomi: y.obyekt, lastSana: y.sana, count: 0, items: [] };
+      obs[y.obyekt].count++;
+      obs[y.obyekt].items.push(y);
+    }
+  });
+  
+  const obyektNames = Object.keys(obs);
+  if(obyektNames.length === 0) { container.innerHTML = '<div class="empty">Obyektlar ro\'yxati bo\'sh</div>'; return; }
+  
+  obyektNames.forEach(name => {
+    const o = obs[name];
+    const totalSum = o.items.reduce((sum, item) => sum + (item.jami || 0), 0);
+    container.innerHTML += `
+      <div class="obyekt-card" onclick="showUstaDetail('${name}')" style="display:none"></div>
+      <div class="obyekt-card" onclick="showObyektDetail('${name}')">
+        <div class="obyekt-title">🏗️ ${name}</div>
+        <div class="obyekt-info">
+          <span>Oxirgi harakat: ${o.lastSana}</span>
+          <span>Operatsiyalar soni: ${o.count}</span>
+        </div>
+        <div class="obyekt-total">${totalSum.toLocaleString()} so'm</div>
+      </div>
+    `;
+  });
+}
+
+function showObyektDetail(nomi) {
+  document.getElementById('panel-obyekt').classList.remove('active');
+  document.getElementById('panel-obyekt-detail').style.display = 'block';
+  document.getElementById('obyekt-detail-title').innerHTML = `🏗️ ${nomi} (Chiqimlar)`;
+  
+  const div = document.getElementById('obyekt-detail-content');
+  div.innerHTML = '';
+  const hs = [...data.yozuvlar].reverse().filter(y => y.tur === 'chiqim' && y.obyekt === nomi);
+  
+  if(hs.length === 0) { div.innerHTML = '<div class="empty" style="border:1px solid var(--border)">Yozuvlar yo\'q</div>'; return; }
+  
+  div.innerHTML = '<div class="activity-list">' + hs.map(y => `
+    <div class="act-item chiqim">
+      <div class="ai-info">
+        <div class="ai-title">${y.mahsulot}</div>
+        <div class="ai-sub">${y.sana} • Usta: ${y.ism} • Klient: ${y.tel||'-'}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="ai-val">-${y.miqdor} ${y.birlik}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted)">${(y.jami||0).toLocaleString()} so'm</div>
+      </div>
+    </div>
+  `).join('') + '</div>';
+  
+  const total = hs.reduce((s, y) => s + (y.jami || 0), 0);
+  div.innerHTML += `
+    <div style="margin-top:20px; padding:15px; background:var(--bg); border-radius:12px; border:1px solid var(--border); text-align:right;">
+      <div style="font-size:0.9rem; color:var(--text-muted)">Jami summa:</div>
+      <div style="font-size:1.5rem; font-weight:700; color:var(--success); font-family:var(--mono)">${total.toLocaleString()} so'm</div>
+    </div>
+  `;
+}
+
+function backToObyektlar() {
+  document.getElementById('panel-obyekt-detail').style.display = 'none';
+  document.getElementById('panel-obyekt').classList.add('active');
+  renderObyektlar();
 }
 
 // ================= SKANER / YORDAMCHI =================
