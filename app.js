@@ -885,15 +885,15 @@ function closeScanner() {
 function toggleNewMahsulotPopover() {
   const el = document.getElementById('new-mahsulot-popover');
   el.classList.toggle('active');
-  if(el.classList.contains('active')) document.getElementById('nm-nomi').focus();
+  if(el.classList.contains('active')) document.getElementById('pnm-nomi').focus();
 }
 
 function saveNewMahsulotInline() {
-  const nom = document.getElementById('nm-nomi').value.trim();
-  const bc = document.getElementById('nm-barkod').value.trim() || generateBarcode();
-  const bir = document.getElementById('nm-birlik').value;
-  const bosh = parseFloat(document.getElementById('nm-boshlangich').value) || 0;
-  const min = parseFloat(document.getElementById('nm-minimal').value) || 0;
+  const nom = document.getElementById('pnm-nomi').value.trim();
+  const bc = document.getElementById('pnm-barkod').value.trim() || generateBarcode();
+  const bir = document.getElementById('pnm-birlik').value;
+  const bosh = parseFloat(document.getElementById('pnm-boshlangich').value) || 0;
+  const min = parseFloat(document.getElementById('pnm-minimal').value) || 0;
   
   if(!nom) { toast("Nomi kiritilmadi!", "error"); return; }
   if(data.mahsulotlar.find(m => m.nom.toLowerCase() === nom.toLowerCase())) {
@@ -912,10 +912,10 @@ function saveNewMahsulotInline() {
   mahsulotTanlandi('kirim');
   
   // clear popover
-  document.getElementById('nm-nomi').value = '';
-  document.getElementById('nm-barkod').value = '';
-  document.getElementById('nm-boshlangich').value = '0';
-  document.getElementById('nm-minimal').value = '0';
+  document.getElementById('pnm-nomi').value = '';
+  document.getElementById('pnm-barkod').value = '';
+  document.getElementById('pnm-boshlangich').value = '0';
+  document.getElementById('pnm-minimal').value = '0';
 }
 
 function toggleTheme() {
