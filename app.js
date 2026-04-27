@@ -394,6 +394,10 @@ function kirimJadvalgaQosh() {
   
   pendingKirim.push({ nom, miqdor: miq, narx, jami: miq * narx, birlik: bir, izoh: izh });
   renderPending('kirim');
+  kirimFormTozala();
+}
+
+function kirimFormTozala() {
   ['k-mahsulot','k-miqdor','k-narx','k-izoh'].forEach(id => setVal(id, ''));
   document.getElementById('k-jami-summa').innerText = "0 so'm";
   document.getElementById('k-zaxira-info').classList.remove('visible');
@@ -890,6 +894,56 @@ function closeScanner() {
   }
 }
 
+function generateBarcode() {
+  return Math.floor(100000000000 + Math.random() * 900000000000).toString();
+}
+
+function openNewMahsulotModal() {
+  document.getElementById('new-mahsulot-modal').classList.add('active');
+  document.getElementById('nm-nom').focus();
+}
+
+function closeNewMahsulotModal() {
+  document.getElementById('new-mahsulot-modal').classList.remove('active');
+  ['nm-nom','nm-barcode','nm-boshlangich','nm-min'].forEach(id => setVal(id, ''));
+}
+
+function saveMahsulotPanel() {
+  const nom = document.getElementById('m-nom').value.trim();
+  const bc = document.getElementById('m-barcode').value.trim() || generateBarcode();
+  const bir = document.getElementById('m-birlik').value;
+  const bosh = parseFloat(document.getElementById('m-boshlangich').value) || 0;
+  const min = parseFloat(document.getElementById('m-min').value) || 0;
+
+  if(!nom) { toast("Nomi kiritilmadi!", "error"); return; }
+  if(data.mahsulotlar.find(m => m.nom.toLowerCase() === nom.toLowerCase())) {
+    toast("Mahsulot allaqachon mavjud!", "error"); return;
+  }
+  
+  data.mahsulotlar.push({ id: Date.now()+'', nom, barcode: bc, birlik: bir, boshlangich: bosh, min, sana: new Date().toISOString() });
+  saveData(); 
+  toast("✅ Mahsulot saqlandi!");
+  ['m-nom','m-barcode','m-boshlangich','m-min'].forEach(id => setVal(id, ''));
+}
+
+function saveNewMahsulot() {
+  const nom = document.getElementById('nm-nom').value.trim();
+  const bc = document.getElementById('nm-barcode').value.trim() || generateBarcode();
+  const bir = document.getElementById('nm-birlik').value;
+  const bosh = parseFloat(document.getElementById('nm-boshlangich').value) || 0;
+  const min = parseFloat(document.getElementById('nm-min').value) || 0;
+
+  if(!nom) { toast("Nomi kiritilmadi!", "error"); return; }
+  if(data.mahsulotlar.find(m => m.nom.toLowerCase() === nom.toLowerCase())) {
+    toast("Mahsulot allaqachon mavjud!", "error"); return;
+  }
+  
+  data.mahsulotlar.push({ id: Date.now()+'', nom, barcode: bc, birlik: bir, boshlangich: bosh, min, sana: new Date().toISOString() });
+  saveData(); 
+  toast("✅ Yangi mahsulot saqlandi!");
+  closeNewMahsulotModal();
+}
+
 // Yangi mahsulot Popover (inline kirim uchun)
 function toggleNewMahsulotPopover() {
   const el = document.getElementById('new-mahsulot-popover');
@@ -962,6 +1016,28 @@ function confirmDelete() {
 function closeDeleteModal() {
   targetDeleteId = null;
   document.getElementById('delete-modal').classList.remove('active');
+}
+
+function closeQoldiqEdit() {
+  document.getElementById('qoldiq-edit-modal').classList.remove('active');
+}
+
+function excelExport() {
+  if (typeof XLSX === 'undefined') { toast("Kutubxona yuklanmagan!", "error"); return; }
+  const rows = [['#', 'Sana', 'Tur', 'Kim', 'Mahsulot', 'Oldingi', 'Miqdor', 'Yangi qoldiq', 'Izoh']];
+  const tbody = document.getElementById('tarix-tbody');
+  if(!tbody) return;
+  const trs = tbody.querySelectorAll('tr');
+  trs.forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if(tds.length > 1) {
+      rows.push(Array.from(tds).slice(0, 9).map(td => td.innerText));
+    }
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Tarix");
+  XLSX.writeFile(wb, `sannur_tarix_${today()}.xlsx`);
 }
 
 function setVal(id, v) { const el = document.getElementById(id); if(el) el.value = v; }
