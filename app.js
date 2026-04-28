@@ -606,8 +606,16 @@ function renderTarix() {
       }
     }
 
-    // O'chirish tugmasi admin orqali
-    const delBtn = currentUserRole === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="ochirishYozuv('${y.id}')">🗑️</button>` : '';
+    // O'chirish va Tahrirlash tugmalari admin orqali
+    let actionBtns = '';
+    if (currentUserRole === 'admin') {
+      actionBtns = `
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="openHistoryEdit('${y.id}')" title="Tahrirlash">✏️</button>
+          <button class="btn btn-ghost btn-sm" onclick="ochirishYozuv('${y.id}')" title="O'chirish">🗑️</button>
+        </div>
+      `;
+    }
     
     tb.innerHTML += `
       <tr>
@@ -620,7 +628,7 @@ function renderTarix() {
         <td style="font-family:var(--mono); font-weight:bold; ${cls}">${znak}${y.miqdor} ${y.birlik}</td>
         <td>${y.qoldiq||0}</td>
         <td><small>${y.izoh || ''}</small></td>
-        <td>${delBtn}</td>
+        <td>${actionBtns}</td>
       </tr>
     `;
   });
@@ -657,6 +665,91 @@ function ochirishYozuv(id) {
   data.yozuvlar = data.yozuvlar.filter(y => y.id.toString() !== id.toString());
   saveData();
   toast("🗑️ Yozuv o'chirildi");
+}
+
+// ================= TARIXNI TAHRIRLASH =================
+function openHistoryEdit(id) {
+  const y = data.yozuvlar.find(x => x.id.toString() === id.toString());
+  if (!y) return;
+
+  setVal('he-id', y.id);
+  setVal('he-sana', y.sana);
+  setVal('he-ism', y.ism || '');
+  setVal('he-miqdor', y.miqdor);
+  setVal('he-izoh', y.izoh || '');
+  
+  const obyektGroup = document.getElementById('he-obyekt-group');
+  if (y.tur === 'chiqim') {
+    obyektGroup.style.display = 'block';
+    setVal('he-obyekt', y.obyekt || '');
+  } else {
+    obyektGroup.style.display = 'none';
+  }
+
+  document.getElementById('history-edit-modal').classList.add('active');
+}
+
+function closeHistoryEdit() {
+  document.getElementById('history-edit-modal').classList.remove('active');
+}
+
+function saveHistoryEdit() {
+  const id = document.getElementById('he-id').value;
+  const idx = data.yozuvlar.findIndex(x => x.id.toString() === id.toString());
+  if (idx === -1) return;
+
+  const y = data.yozuvlar[idx];
+  y.sana = document.getElementById('he-sana').value;
+  y.ism = document.getElementById('he-ism').value.trim();
+  y.miqdor = parseFloat(document.getElementById('he-miqdor').value) || 0;
+  y.izoh = document.getElementById('he-izoh').value.trim();
+  
+  if (y.tur === 'chiqim') {
+    y.obyekt = document.getElementById('he-obyekt').value.trim();
+  }
+
+  // Qoldiqni qayta hisoblash kerak bo'lishi mumkin, lekin getJoriyZaxira har doim yozuvlardan hisoblaydi.
+  // Faqatgina har bir yozuvdagi 'qoldiq' (snapshot) maydoni noto'g'ri bo'lib qoladi.
+  // Uni to'g'irlash uchun barcha yozuvlarni qayta hisoblash kerak.
+  recalculateSnapshots(y.mahsulot);
+
+  saveData();
+  
+  // Detail panellar ochiq bo'lsa, ularni ham yangilash
+  if (document.getElementById('panel-usta-detail').style.display === 'block') {
+    const ustaName = document.getElementById('usta-detail-title').innerText.replace('👷 ', '').split(' (')[0];
+    showUstaDetail(ustaName);
+  }
+  if (document.getElementById('panel-obyekt-detail').style.display === 'block') {
+    const obyektName = document.getElementById('obyekt-detail-title').innerText.replace('🏗️ ', '').split(' (')[0];
+    showObyektDetail(obyektName);
+  }
+
+  closeHistoryEdit();
+  toast("✅ Operatsiya tahrirlandi!");
+}
+
+function recalculateSnapshots(mahsulotNomi) {
+  const m = data.mahsulotlar.find(x => x.nom === mahsulotNomi);
+  if (!m) return;
+  
+  let q = parseFloat(m.boshlangich || 0);
+  // Yozuvlarni vaqt bo'yicha tartiblash (agar tartibi buzilgan bo'lsa)
+  // Ammo hozircha qo'shilgan tartibda hisoblaymiz
+  data.yozuvlar.filter(y => y.mahsulot === mahsulotNomi).forEach(y => {
+    y.zaxira = q;
+    const miq = parseFloat(y.miqdor) || 0;
+    if (y.tur === 'kirim') {
+      if(y.izoh && y.izoh.includes('[KORREKSIYA]')) {
+        q = miq;
+      } else {
+        q += miq;
+      }
+    } else {
+      q -= miq;
+    }
+    y.qoldiq = q;
+  });
 }
 window.qidirish = renderTarix; // HTMLdagi onChange eventi uchun
 
@@ -816,13 +909,17 @@ function showUstaDetail(nomi) {
   const ul = '<div class="activity-list">' + hs.map(y => {
      let cls = y.tur==='kirim' ? 'kirim' : 'chiqim';
      let zn  = y.tur==='kirim' ? '+' : '-';
+     let editBtn = currentUserRole === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openHistoryEdit('${y.id}')" title="Tahrirlash">✏️</button>` : '';
      return `
       <div class="act-item ${cls}">
         <div class="ai-info">
           <div class="ai-title">${y.mahsulot}</div>
           <div class="ai-sub">${y.sana} • Klient: ${y.tel||'-'}</div>
         </div>
-        <div class="ai-val">${zn}${y.miqdor} ${y.birlik}</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="ai-val">${zn}${y.miqdor} ${y.birlik}</div>
+          ${editBtn}
+        </div>
       </div>
      `;
   }).join('') + '</div>';
@@ -881,18 +978,23 @@ function showObyektDetail(nomi) {
   
   if(hs.length === 0) { div.innerHTML = '<div class="empty" style="border:1px solid var(--border)">Yozuvlar yo\'q</div>'; return; }
   
-  div.innerHTML = '<div class="activity-list">' + hs.map(y => `
+  div.innerHTML = '<div class="activity-list">' + hs.map(y => {
+    let editBtn = currentUserRole === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openHistoryEdit('${y.id}')" title="Tahrirlash">✏️</button>` : '';
+    return `
     <div class="act-item chiqim">
       <div class="ai-info">
         <div class="ai-title">${y.mahsulot}</div>
         <div class="ai-sub">${y.sana} • Usta: ${y.ism} • Klient: ${y.tel||'-'}</div>
       </div>
-      <div style="text-align:right">
-        <div class="ai-val">-${y.miqdor} ${y.birlik}</div>
-        <div style="font-size:0.75rem; color:var(--text-muted)">${(y.jami||0).toLocaleString()} so'm</div>
+      <div style="display:flex; align-items:center; gap:12px">
+        <div style="text-align:right">
+          <div class="ai-val">-${y.miqdor} ${y.birlik}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted)">${(y.jami||0).toLocaleString()} so'm</div>
+        </div>
+        ${editBtn}
       </div>
     </div>
-  `).join('') + '</div>';
+  `; }).join('') + '</div>';
   
   const total = hs.reduce((s, y) => s + (y.jami || 0), 0);
   div.innerHTML += `

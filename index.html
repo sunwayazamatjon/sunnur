@@ -623,6 +623,27 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="history-edit-modal">
+    <div class="modal"><button class="modal-close-btn" onclick="closeHistoryEdit()">✕</button>
+      <h3>✏️ Operatsiyani tahrirlash</h3>
+      <input type="hidden" id="he-id">
+      <div class="form-grid">
+        <div class="form-group"><label>Sana</label><input type="date" id="he-sana"></div>
+        <div class="form-group"><label>Kim (Usta/Yetkazuvchi)</label><input type="text" id="he-ism"></div>
+        <div class="form-group" id="he-obyekt-group"><label>Obyekt</label><input type="text" id="he-obyekt"></div>
+        <div class="form-group"><label>Miqdor</label><input type="number" id="he-miqdor" step="0.01"></div>
+        <div class="form-group"><label>Izoh</label><input type="text" id="he-izoh"></div>
+      </div>
+      <div class="info-note" style="margin-top:15px">
+        💡 Miqdorni o'zgartirsangiz, ombordagi qoldiq avtomatik ravishda qayta hisoblanadi.
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeHistoryEdit()">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="saveHistoryEdit()">✅ Saqlash</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast"></div>
 
   <script src="app.js"></script>
