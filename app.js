@@ -33,7 +33,8 @@ let currentUserRole = null;
 let html5QrcodeScanner = null;
 let currentScannerTarget = ''; 
 let itemEditIndex = null;
-let dataLoaded = false; // Ma'lumot yuklanganini tekshirish uchun
+let dataLoaded = false; 
+let currentHistoryTab = 'all'; 
 
 // ================= INITALIZATSIYA =================
 document.addEventListener('DOMContentLoaded', () => {
@@ -325,6 +326,7 @@ function refreshAllDataViews() {
   updateDashboardRecent();
   renderUstalar();
   renderObyektlar();
+  renderTarix();
 }
 
 // ================= KIRIM / CHIQIM FUNKSIYALARI =================
@@ -584,6 +586,7 @@ function renderTarix() {
     if(tF && y.tur !== tF) match = false;
     if(uF && y.ism !== uF) match = false;
     if(qF && !(y.ism?.toLowerCase().includes(qF) || y.mahsulot?.toLowerCase().includes(qF) || y.tel?.toLowerCase().includes(qF))) match = false;
+    if(currentHistoryTab !== 'all' && y.tulov !== currentHistoryTab) match = false;
     return match;
   });
   
@@ -593,6 +596,16 @@ function renderTarix() {
     const znak = y.tur === 'kirim' ? '+' : '-';
     const cls  = y.tur === 'kirim' ? 'color:var(--success)' : 'color:var(--danger)';
     
+    // To'lov turi belgisi
+    let payBadge = '';
+    if (y.tur === 'kirim') {
+      if (y.tulov === 'naqd') payBadge = ' <small style="color:var(--success)">[Naqd]</small>';
+      else if (y.tulov === 'qarz') {
+        const payBtn = currentUserRole === 'admin' ? `<button class="pay-btn" onclick="payDebt('${y.id}')">To'lash</button>` : '';
+        payBadge = ` <small style="color:var(--danger)">[Qarz]</small> ${payBtn}`;
+      }
+    }
+
     // O'chirish tugmasi admin orqali
     const delBtn = currentUserRole === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="ochirishYozuv('${y.id}')">🗑️</button>` : '';
     
@@ -601,7 +614,7 @@ function renderTarix() {
         <td>${i+1}</td>
         <td>${y.sana}</td>
         <td><span style="border-radius:4px;padding:2px 6px;background:var(--bg);${cls}">${y.tur.toUpperCase()}</span></td>
-        <td>${y.ism || '-'} ${y.tel ? `(<small>${y.tel}</small>)` : ''}</td>
+        <td>${y.ism || '-'} ${y.tel ? `(<small>${y.tel}</small>)` : ''}${payBadge}</td>
         <td><strong>${y.mahsulot}</strong></td>
         <td>${y.zaxira||0}</td>
         <td style="font-family:var(--mono); font-weight:bold; ${cls}">${znak}${y.miqdor} ${y.birlik}</td>
@@ -611,6 +624,39 @@ function renderTarix() {
       </tr>
     `;
   });
+}
+
+function setHistoryTab(tab) {
+  currentHistoryTab = tab;
+  document.querySelectorAll('.history-tabs .tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.innerText.toLowerCase().includes(tab === 'all' ? 'barcha' : tab)) btn.classList.add('active');
+  });
+  renderTarix();
+}
+
+function payDebt(id) {
+  if (currentUserRole !== 'admin') { toast("Sizda huquq yo'q", "error"); return; }
+  if (!confirm("Ushbu qarz to'langanini tasdiqlaysizmi?")) return;
+
+  const idx = data.yozuvlar.findIndex(y => y.id.toString() === id.toString());
+  if (idx !== -1) {
+    const today = new Date().toISOString().split('T')[0];
+    data.yozuvlar[idx].tulov = 'naqd';
+    data.yozuvlar[idx].sana = today;
+    data.yozuvlar[idx].izoh = (data.yozuvlar[idx].izoh || '') + " [TO'LANDI]";
+    saveData();
+    toast("✅ Qarz to'landi va Naqd bo'limiga o'tkazildi!");
+  }
+}
+
+function ochirishYozuv(id) {
+  if (currentUserRole !== 'admin') { toast("Sizda huquq yo'q", "error"); return; }
+  if (!confirm("Ushbu yozuvni o'chirishni xohlaysizmi?")) return;
+  
+  data.yozuvlar = data.yozuvlar.filter(y => y.id.toString() !== id.toString());
+  saveData();
+  toast("🗑️ Yozuv o'chirildi");
 }
 window.qidirish = renderTarix; // HTMLdagi onChange eventi uchun
 

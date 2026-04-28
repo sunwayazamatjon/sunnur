@@ -256,6 +256,20 @@ tr:hover td { background: var(--bg); }
 .filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; }
 .filter-row input, .filter-row select { padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); flex: 1; min-width: 150px; }
 
+.history-tabs { display: flex; gap: 8px; margin-bottom: 1rem; }
+.history-tabs .tab-btn {
+  flex: 1; padding: 10px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-muted); font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s;
+}
+.history-tabs .tab-btn:hover { background: var(--bg); }
+.history-tabs .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+.pay-btn {
+  background: var(--success); color: white; border: none; padding: 4px 10px;
+  border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;
+}
+.pay-btn:hover { background: #059669; }
+
 .search-row { margin-bottom: 1rem; }
 .search-row input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 1rem; outline: none; }
 .search-row input:focus { border-color: var(--primary); }

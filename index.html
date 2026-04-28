@@ -448,7 +448,12 @@
         <!-- ===== TARIX PANELI ===== -->
         <div class="panel" id="panel-tarix">
           <div class="card">
-            <div class="card-title">📜 Barcha operatsiyalar</div>
+            <div class="card-title">📜 Amallar tarixi</div>
+            <div class="history-tabs">
+              <button class="tab-btn active" onclick="setHistoryTab('all')">Barcha</button>
+              <button class="tab-btn" onclick="setHistoryTab('naqd')">💵 Naqd</button>
+              <button class="tab-btn" onclick="setHistoryTab('qarz')">💳 Qarzlar</button>
+            </div>
             <div class="filter-row">
               <input type="text" id="search-input" placeholder="🔍 Qidirish (ism, mahsulot)" oninput="qidirish()">
               <select id="filter-mahsulot" onchange="qidirish()">
