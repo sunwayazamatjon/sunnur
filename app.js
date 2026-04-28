@@ -674,10 +674,15 @@ function openHistoryEdit(id) {
 
   setVal('he-id', y.id);
   setVal('he-sana', y.sana);
+  setVal('he-mahsulot', y.mahsulot);
   setVal('he-ism', y.ism || '');
   setVal('he-miqdor', y.miqdor);
   setVal('he-izoh', y.izoh || '');
   
+  document.getElementById('he-old-miqdor').innerText = `${y.miqdor} ${y.birlik || ''}`;
+  document.getElementById('he-miqdor').dataset.unitPrice = y.narx || 0;
+  heSummaHisob();
+
   const obyektGroup = document.getElementById('he-obyekt-group');
   if (y.tur === 'chiqim') {
     obyektGroup.style.display = 'block';
@@ -687,6 +692,12 @@ function openHistoryEdit(id) {
   }
 
   document.getElementById('history-edit-modal').classList.add('active');
+}
+
+function heSummaHisob() {
+  const miq = parseFloat(document.getElementById('he-miqdor').value) || 0;
+  const narx = parseFloat(document.getElementById('he-miqdor').dataset.unitPrice) || 0;
+  document.getElementById('he-jami').innerText = (miq * narx).toLocaleString() + " so'm";
 }
 
 function closeHistoryEdit() {
@@ -699,10 +710,16 @@ function saveHistoryEdit() {
   if (idx === -1) return;
 
   const y = data.yozuvlar[idx];
+  const newMiqdor = parseFloat(document.getElementById('he-miqdor').value) || 0;
+  const newIzoh = document.getElementById('he-izoh').value.trim();
+
+  if (!newIzoh) { toast("Izoh kiritish majburiy!", "error"); return; }
+
   y.sana = document.getElementById('he-sana').value;
   y.ism = document.getElementById('he-ism').value.trim();
-  y.miqdor = parseFloat(document.getElementById('he-miqdor').value) || 0;
-  y.izoh = document.getElementById('he-izoh').value.trim();
+  y.miqdor = newMiqdor;
+  y.jami = newMiqdor * (y.narx || 0);
+  y.izoh = newIzoh;
   
   if (y.tur === 'chiqim') {
     y.obyekt = document.getElementById('he-obyekt').value.trim();

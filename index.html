@@ -625,17 +625,26 @@
 
   <div class="modal-overlay" id="history-edit-modal">
     <div class="modal"><button class="modal-close-btn" onclick="closeHistoryEdit()">✕</button>
-      <h3>✏️ Operatsiyani tahrirlash</h3>
+      <h3>✏️ Operatsiyani tahrirlash / Qaytarish</h3>
       <input type="hidden" id="he-id">
       <div class="form-grid">
         <div class="form-group"><label>Sana</label><input type="date" id="he-sana"></div>
+        <div class="form-group"><label>Mahsulot</label><input type="text" id="he-mahsulot" readonly style="background:var(--bg); opacity:0.8"></div>
         <div class="form-group"><label>Kim (Usta/Yetkazuvchi)</label><input type="text" id="he-ism"></div>
         <div class="form-group" id="he-obyekt-group"><label>Obyekt</label><input type="text" id="he-obyekt"></div>
-        <div class="form-group"><label>Miqdor</label><input type="number" id="he-miqdor" step="0.01"></div>
-        <div class="form-group"><label>Izoh</label><input type="text" id="he-izoh"></div>
+        <div class="form-group">
+          <label>Dastlabki miqdor</label>
+          <div id="he-old-miqdor" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-family: var(--mono); font-weight: 700; color: var(--text-muted);">0</div>
+        </div>
+        <div class="form-group"><label>Yangi miqdor (Qolgani)</label><input type="number" id="he-miqdor" step="0.01" oninput="heSummaHisob()"></div>
+        <div class="form-group">
+          <label>Jami summa</label>
+          <div id="he-jami" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-family: var(--mono); font-weight: 700; color: var(--success);">0 so'm</div>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;"><label>Izoh * (Majburiy)</label><input type="text" id="he-izoh" placeholder="Sababini yozing (masalan: 2 ta qaytarildi)"></div>
       </div>
       <div class="info-note" style="margin-top:15px">
-        💡 Miqdorni o'zgartirsangiz, ombordagi qoldiq avtomatik ravishda qayta hisoblanadi.
+        💡 <strong>Qaytarish:</strong> Agar usta narsani qaytarib olib kelgan bo'lsa, "Yangi miqdor"ga usta ishlatgan (ushlab qolgan) miqdorni yozing. Qolgani omborga qaytadi.
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeHistoryEdit()">Bekor qilish</button>
