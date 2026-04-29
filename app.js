@@ -250,39 +250,6 @@ function updateDashboardRecent() {
   });
 }
 
-// ================= MAHSULOT QO'SHISH =================
-function saveMahsulotPanel() {
-  if (currentUserRole !== 'admin') { toast("Sizda huquq yo'q", "error"); return; }
-  
-  const nom = document.getElementById('m-nom').value.trim();
-  const bc = document.getElementById('m-barcode').value.trim() || generateBarcode();
-  const bir = document.getElementById('m-birlik').value;
-  const bosh = parseFloat(document.getElementById('m-boshlangich').value) || 0;
-  const min = parseFloat(document.getElementById('m-min').value) || 0;
-
-  if (!nom) { toast("Nomi kiritilmadi!", "error"); return; }
-  
-  if (data.mahsulotlar.find(m => m.nom.toLowerCase() === nom.toLowerCase())) {
-    toast("Bu mahsulot allaqachon mavjud!", "error"); return;
-  }
-
-  if (bc && data.mahsulotlar.find(m => m.barcode === bc)) {
-    toast("Bu barkod allaqachon ishlatilgan!", "error"); return;
-  }
-
-  const yangi = { id: Date.now().toString(), nom, barcode: bc, birlik: bir, boshlangich: bosh, min, sana: new Date().toISOString() };
-  data.mahsulotlar.push(yangi);
-  
-  saveData();
-  toast("✅ Mahsulot saqlandi!");
-  ['m-nom','m-min','m-barcode'].forEach(id => setVal(id, '')); setVal('m-boshlangich', '0');
-  updateDatalists();
-}
-
-function generateBarcode() {
-  return Math.floor(100000000 + Math.random() * 900000000).toString();
-}
-
 // ================= DATALIST VA SELECTLARNI YANGILASH =================
 function updateDatalists() {
   const mList1 = document.getElementById('mahsulot-list');
@@ -780,6 +747,7 @@ function openQoldiqEdit(nomi) {
   setVal('edit-nom', m.nom);
   setVal('edit-birlik', m.birlik);
   setVal('edit-min', m.min || 0);
+  setVal('edit-barcode', m.barcode || '');
   setVal('edit-yangi-qoldiq', q);
   setVal('edit-joriy-qoldiq', q);
   setVal('edit-izoh', '');
@@ -817,18 +785,25 @@ function saveQoldiqEdit() {
   const newName = document.getElementById('edit-nom').value.trim();
   const yangiBirlik = document.getElementById('edit-birlik').value;
   const yangiMin = parseFloat(document.getElementById('edit-min').value) || 0;
+  const yangiBarcode = document.getElementById('edit-barcode').value.trim();
   const yangiQoldiq = parseFloat(document.getElementById('edit-yangi-qoldiq').value);
   const izoh = document.getElementById('edit-izoh').value.trim() || '[KORREKSIYA]';
   const joriy = parseFloat(document.getElementById('edit-joriy-qoldiq').value);
   
   if(newName === '') { toast("Nomini kiriting", "error"); return; }
+
+  // Barkod tekshiruvi (agar o'zgargan bo'lsa)
+  if (yangiBarcode && data.mahsulotlar.find(x => x.barcode === yangiBarcode && x.nom !== oldName)) {
+    toast("Bu barkod allaqachon boshqa mahsulotda ishlatilgan!", "error"); return;
+  }
   
-  // Mahsulot nomini yangilash
+  // Mahsulot ma'lumotlarini yangilash
   let m = data.mahsulotlar.find(x => x.nom === oldName);
   if(m) {
     m.nom = newName;
     m.birlik = yangiBirlik;
     m.min = yangiMin;
+    m.barcode = yangiBarcode;
   }
   
   // Yozuvlardagi ismlarni ham o'zgartirish kerak, agar nom o'zgarsa
@@ -1074,6 +1049,7 @@ function closeNewMahsulotModal() {
 }
 
 function saveMahsulotPanel() {
+  if (currentUserRole !== 'admin') { toast("Sizda huquq yo'q", "error"); return; }
   const nom = document.getElementById('m-nom').value.trim();
   const bc = document.getElementById('m-barcode').value.trim() || generateBarcode();
   const bir = document.getElementById('m-birlik').value;
@@ -1085,10 +1061,15 @@ function saveMahsulotPanel() {
     toast("Mahsulot allaqachon mavjud!", "error"); return;
   }
   
+  if (bc && data.mahsulotlar.find(m => m.barcode === bc)) {
+    toast("Bu barkod allaqachon ishlatilgan!", "error"); return;
+  }
+  
   data.mahsulotlar.push({ id: Date.now()+'', nom, barcode: bc, birlik: bir, boshlangich: bosh, min, sana: new Date().toISOString() });
   saveData(); 
   toast("✅ Mahsulot saqlandi!");
-  ['m-nom','m-barcode','m-boshlangich','m-min'].forEach(id => setVal(id, ''));
+  ['m-nom','m-barcode','m-boshlangich','m-min'].forEach(id => setVal(id, '')); setVal('m-boshlangich', '0');
+  updateDatalists();
 }
 
 function saveNewMahsulot() {
@@ -1102,11 +1083,16 @@ function saveNewMahsulot() {
   if(data.mahsulotlar.find(m => m.nom.toLowerCase() === nom.toLowerCase())) {
     toast("Mahsulot allaqachon mavjud!", "error"); return;
   }
+
+  if (bc && data.mahsulotlar.find(m => m.barcode === bc)) {
+    toast("Bu barkod allaqachon ishlatilgan!", "error"); return;
+  }
   
   data.mahsulotlar.push({ id: Date.now()+'', nom, barcode: bc, birlik: bir, boshlangich: bosh, min, sana: new Date().toISOString() });
   saveData(); 
   toast("✅ Yangi mahsulot saqlandi!");
   closeNewMahsulotModal();
+  updateDatalists();
 }
 
 // Yangi mahsulot Popover (inline kirim uchun)
