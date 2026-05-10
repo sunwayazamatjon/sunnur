@@ -166,6 +166,7 @@ function showTab(tabId) {
   if(tabId === 'tarix') renderTarix();
   if(tabId === 'usta') renderUstalar();
   if(tabId === 'obyekt') renderObyektlar();
+  if(tabId === 'hisobot') renderHisobot();
   
   // Dashboardga o'tilganda activity ro'yxatini yangilash
   if(tabId === 'dashboard') updateDashboardRecent();
@@ -294,6 +295,7 @@ function refreshAllDataViews() {
   renderUstalar();
   renderObyektlar();
   renderTarix();
+  renderHisobot();
 }
 
 // ================= KIRIM / CHIQIM FUNKSIYALARI =================
@@ -1252,4 +1254,280 @@ function importJSON(event) {
   };
   reader.readAsText(file);
   event.target.value = ''; // Reset input
+}
+
+// ================= HISOBOT (KIM OLIB KELGAN) =================
+function renderHisobot() {
+  const container = document.getElementById('hisobot-cards-list');
+  if (!container) return;
+
+  const searchVal = (document.getElementById('hisobot-search')?.value || '').toLowerCase();
+  const monthVal = document.getElementById('hisobot-month')?.value || '';
+
+  // Barcha kirim yozuvlarini guruhlaymiz:
+  // Har bir guruh = bir xil sana + yetkazib beruvchi (ism) + vakil (tel) kombinatsiyasi
+  const groups = {};
+  data.yozuvlar
+    .filter(y => y.tur === 'kirim')
+    .forEach(y => {
+      const key = `${y.sana}__${y.ism || ''}__${y.tel || ''}`;
+      if (!groups[key]) {
+        groups[key] = {
+          key,
+          sana: y.sana,
+          ism: y.ism || "Noma'lum",
+          tel: y.tel || '',
+          items: []
+        };
+      }
+      groups[key].items.push(y);
+    });
+
+  // Guruhlarni sanaga ko'ra teskari tartibda
+  let groupList = Object.values(groups).sort((a, b) => {
+    if (b.sana > a.sana) return 1;
+    if (b.sana < a.sana) return -1;
+    return 0;
+  });
+
+  // Filtr: qidiruv
+  if (searchVal) {
+    groupList = groupList.filter(g =>
+      g.ism.toLowerCase().includes(searchVal) ||
+      g.tel.toLowerCase().includes(searchVal)
+    );
+  }
+
+  // Filtr: oy
+  if (monthVal) {
+    groupList = groupList.filter(g => g.sana && g.sana.startsWith(monthVal));
+  }
+
+  container.innerHTML = '';
+
+  if (groupList.length === 0) {
+    container.innerHTML = '<div class="empty">Kirim yozuvlari topilmadi</div>';
+    return;
+  }
+
+  groupList.forEach(g => {
+    const totalSum = g.items.reduce((s, y) => s + (y.jami || 0), 0);
+    const totalMahsulot = g.items.length;
+    const groupKey = encodeURIComponent(g.key);
+
+    const card = document.createElement('div');
+    card.className = 'hisobot-card';
+    card.innerHTML = `
+      <div class="hc-head" onclick="showHisobotDetail('${groupKey}')" style="cursor:pointer">
+        <div class="hc-info">
+          <div class="hc-name">&#128230; ${g.ism}</div>
+          ${g.tel ? `<div class="hc-sub">&#128100; Vakil (Kim olib kelgan): <strong>${g.tel}</strong></div>` : ''}
+          <div class="hc-sub">&#128197; Sana: <strong>${g.sana}</strong></div>
+        </div>
+        <div class="hc-right">
+          <div class="hc-count">${totalMahsulot} ta mahsulot</div>
+          <div class="hc-sum">${totalSum.toLocaleString()} so'm</div>
+          <div class="hc-arrow">&#8250;</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// Guruh tafsilotini modal oynada ko'rsatish
+function showHisobotDetail(encodedKey) {
+  const key = decodeURIComponent(encodedKey);
+  const parts = key.split('__');
+  const sana = parts[0] || '';
+  const ism = parts[1] || "Noma'lum";
+  const tel = parts[2] || '';
+
+  const items = data.yozuvlar.filter(
+    y => y.tur === 'kirim' &&
+         y.sana === sana &&
+         (y.ism || '') === ism &&
+         (y.tel || '') === tel
+  );
+
+  document.getElementById('hisobot-detail-title').innerHTML =
+    `&#128230; ${ism} &mdash; Kirim tafsiloti`;
+
+  document.getElementById('hisobot-detail-meta').innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; gap:16px; font-size:0.9rem;">
+      <span>&#128197; <strong>Sana:</strong> ${sana}</span>
+      ${tel ? `<span>&#128100; <strong>Vakil (Kim olib kelgan):</strong> ${tel}</span>` : ''}
+      <span>&#128203; <strong>Mahsulotlar soni:</strong> ${items.length} ta</span>
+    </div>
+  `;
+
+  const tbody = document.getElementById('hisobot-detail-tbody');
+  tbody.innerHTML = '';
+  let total = 0;
+
+  items.forEach((y, i) => {
+    total += y.jami || 0;
+    const tulovBadge = y.tulov === 'qarz'
+      ? '<span style="color:var(--danger)">&#128179; Qarz</span>'
+      : '<span style="color:var(--success)">&#128181; Naqd</span>';
+    tbody.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td><strong>${y.mahsulot}</strong></td>
+        <td style="font-family:var(--mono)">${y.miqdor} ${y.birlik}</td>
+        <td>${(y.narx || 0).toLocaleString()}</td>
+        <td style="font-family:var(--mono); font-weight:700">${(y.jami || 0).toLocaleString()} so'm</td>
+        <td>${tulovBadge}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById('hisobot-detail-total').innerHTML =
+    `Jami: <span style="color:var(--success)">${total.toLocaleString()} so'm</span>`;
+
+  document.getElementById('hisobot-detail-modal').classList.add('active');
+}
+
+function closeHisobotDetail() {
+  document.getElementById('hisobot-detail-modal').classList.remove('active');
+}
+
+// ================= HISOBOT EXCEL EKSPORT =================
+function exportHisobotExcel() {
+  if (typeof XLSX === 'undefined') {
+    toast('Excel kutubxonasi yuklanmadi!', 'error');
+    return;
+  }
+
+  const monthVal = document.getElementById('hisobot-month')?.value || '';
+  const searchVal = (document.getElementById('hisobot-search')?.value || '').toLowerCase();
+
+  // Guruhlarni hosil qilish (renderHisobot() bilan bir xil mantiq)
+  const groups = {};
+  data.yozuvlar
+    .filter(y => y.tur === 'kirim')
+    .forEach(y => {
+      const key = `${y.sana}__${y.ism || ''}__${y.tel || ''}`;
+      if (!groups[key]) {
+        groups[key] = {
+          key,
+          sana: y.sana,
+          ism: y.ism || "Noma'lum",
+          tel: y.tel || '',
+          items: []
+        };
+      }
+      groups[key].items.push(y);
+    });
+
+  let groupList = Object.values(groups).sort((a, b) => {
+    if (b.sana > a.sana) return 1;
+    if (b.sana < a.sana) return -1;
+    return 0;
+  });
+
+  // Filtrlar
+  if (monthVal) {
+    groupList = groupList.filter(g => g.sana && g.sana.startsWith(monthVal));
+  }
+  if (searchVal) {
+    groupList = groupList.filter(g =>
+      g.ism.toLowerCase().includes(searchVal) ||
+      g.tel.toLowerCase().includes(searchVal)
+    );
+  }
+
+  if (groupList.length === 0) {
+    toast('Eksport qilish uchun ma\'lumot topilmadi!', 'warn');
+    return;
+  }
+
+  // Excel varaq mazmuni — har bir karta blok sifatida
+  const rows = [];
+
+  // Sarlavha
+  const oyNomi = monthVal
+    ? (() => {
+        const d = new Date(monthVal + '-01');
+        return d.toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long' });
+      })()
+    : 'Barcha vaqt';
+
+  rows.push([`SANNUR OMS — Kirim Hisoboti: ${oyNomi}`]);
+  rows.push([`Eksport sanasi: ${new Date().toLocaleDateString('uz-UZ')}`]);
+  rows.push([]); // Bo'sh qator
+
+  let grandTotal = 0;
+  let groupNum = 0;
+
+  groupList.forEach(g => {
+    groupNum++;
+    const groupTotal = g.items.reduce((s, y) => s + (y.jami || 0), 0);
+    grandTotal += groupTotal;
+
+    // Karta sarlavhasi
+    rows.push([
+      `${groupNum}. Yetkazib beruvchi: ${g.ism}`,
+      '',
+      g.tel ? `Vakil (Kim olib kelgan): ${g.tel}` : '',
+      '',
+      `Sana: ${g.sana}`
+    ]);
+
+    // Jadval ustun nomlari
+    rows.push([
+      '№',
+      'Mahsulot nomi',
+      'Miqdori',
+      'Birlik',
+      'Tannarxi (so\'m)',
+      'Jami (so\'m)',
+      'To\'lov turi'
+    ]);
+
+    // Mahsulotlar
+    g.items.forEach((y, i) => {
+      rows.push([
+        i + 1,
+        y.mahsulot || '',
+        y.miqdor || 0,
+        y.birlik || '',
+        y.narx || 0,
+        y.jami || 0,
+        y.tulov === 'qarz' ? 'Qarz' : 'Naqd'
+      ]);
+    });
+
+    // Karta jami
+    rows.push(['', '', '', '', '', groupTotal, '← Jami']);
+    rows.push([]); // Bo'sh ajratuvchi qator
+  });
+
+  // Umumiy jami
+  rows.push(['', '', '', '', 'UMUMIY JAMI:', grandTotal, `so'm`]);
+
+  // XLSX varaq yaratish
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  // Ustun kengliklarini sozlash
+  ws['!cols'] = [
+    { wch: 6 },   // №
+    { wch: 28 },  // Mahsulot
+    { wch: 10 },  // Miqdor
+    { wch: 8 },   // Birlik
+    { wch: 16 },  // Tannarxi
+    { wch: 16 },  // Jami
+    { wch: 12 }   // To'lov
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const sheetName = monthVal ? monthVal.replace('-', '_') : 'hisobot';
+  XLSX.utils.book_append_sheet(wb, ws, `Kirim_${sheetName}`);
+
+  const fileName = monthVal
+    ? `SANNUR_kirim_hisobot_${monthVal}.xlsx`
+    : `SANNUR_kirim_hisobot_${today()}.xlsx`;
+
+  XLSX.writeFile(wb, fileName);
+  toast(`✅ ${groupList.length} ta karta Excel'ga saqlandi!`);
 }

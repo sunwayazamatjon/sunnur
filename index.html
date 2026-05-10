@@ -106,6 +106,7 @@
         <button id="nav-dashboard" class="active" onclick="showTab('dashboard')">🏠 Dashboard</button>
         <button id="nav-kirim" onclick="showTab('kirim')">📥 Kirim</button>
         <button id="nav-chiqim" onclick="showTab('chiqim')">📤 Chiqim</button>
+        <button id="nav-hisobot" onclick="showTab('hisobot')">📊 Hisobot</button>
         <button id="nav-mahsulot" onclick="showTab('mahsulot')">➕ Yangi mahsulot</button>
         <button id="nav-tarix" onclick="showTab('tarix')">📋 Tarix</button>
         <button id="nav-qoldiq" onclick="showTab('qoldiq')">📦 Qoldiq (Ombor)</button>
@@ -417,6 +418,23 @@
           </div>
         </div>
 
+        <!-- ===== HISOBOT PANELI ===== -->
+        <div class="panel" id="panel-hisobot">
+          <div class="card">
+            <div class="card-title">📊 Kirim Hisoboti — Kim olib kelgan</div>
+            <div class="filter-row" style="margin-bottom:16px;align-items:center">
+              <input type="text" id="hisobot-search" placeholder="🔍 Yetkazib beruvchi yoki vakil ismi" oninput="renderHisobot()" style="flex:1;min-width:200px">
+              <input type="month" id="hisobot-month" onchange="renderHisobot()" style="max-width:160px">
+              <button class="btn btn-success" onclick="exportHisobotExcel()" title="Tanlangan oydagi barcha kirimlarni Excel'ga saqlash" style="white-space:nowrap;gap:6px">
+                📥 Excel saqlash
+              </button>
+            </div>
+            <div id="hisobot-cards-list">
+              <div class="empty">Yuklanmoqda...</div>
+            </div>
+          </div>
+        </div>
+
         <!-- ===== YANGI MAHSULOT PANELI ===== -->
         <div class="panel" id="panel-mahsulot">
           <div class="card">
@@ -651,6 +669,31 @@
         <button class="btn btn-ghost" onclick="closeHistoryEdit()">Bekor qilish</button>
         <button class="btn btn-primary" onclick="saveHistoryEdit()">✅ Saqlash</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== HISOBOT DETAIL MODAL ===== -->
+  <div class="modal-overlay" id="hisobot-detail-modal">
+    <div class="modal" style="max-width:700px;width:95%">
+      <button class="modal-close-btn" onclick="closeHisobotDetail()">✕</button>
+      <h3 id="hisobot-detail-title">📦 Kirim tafsiloti</h3>
+      <div id="hisobot-detail-meta" style="margin-bottom:16px; padding:12px; background:var(--bg); border-radius:8px; border:1px solid var(--border);"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>Mahsulot nomi</th>
+              <th>Miqdori</th>
+              <th>Tannarxi</th>
+              <th>Jami</th>
+              <th>To'lov</th>
+            </tr>
+          </thead>
+          <tbody id="hisobot-detail-tbody"></tbody>
+        </table>
+      </div>
+      <div id="hisobot-detail-total" style="margin-top:12px; text-align:right; font-family:var(--mono); font-weight:700; font-size:1.1rem; color:var(--success);"></div>
     </div>
   </div>
 

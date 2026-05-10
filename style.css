@@ -352,3 +352,67 @@ tr:hover td { background: var(--bg); }
   .btn-row { flex-direction: column; }
   .btn-row .btn { width: 100%; }
 }
+
+/* ===== HISOBOT KARTALARI ===== */
+.hisobot-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.hisobot-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 6px 16px rgba(249,115,22,0.08);
+  transform: translateY(-2px);
+}
+.hc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.25rem;
+  gap: 16px;
+}
+.hc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.hc-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.hc-sub {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+}
+.hc-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 120px;
+}
+.hc-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.hc-sum {
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--success);
+}
+.hc-arrow {
+  font-size: 1.3rem;
+  color: var(--primary);
+  font-weight: 700;
+}
