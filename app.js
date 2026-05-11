@@ -108,6 +108,10 @@ function checkAuth() {
     document.getElementById('app').style.display = 'flex';
     document.getElementById('user-badge-text').innerText = auth === 'admin' ? 'Admin' : 'Kuzatuvchi';
     
+    // Snapshot-reset tugmasi faqat admin uchun
+    const snapBtn = document.getElementById('snapshot-reset-btn');
+    if (snapBtn) snapBtn.style.display = auth === 'admin' ? 'inline-flex' : 'none';
+
     if (auth === 'viewer') {
       document.querySelector('.readonly-notice').style.display = 'block';
       // Tugmalarni o'chirish (readonly rejimi)
@@ -322,11 +326,7 @@ function mahsulotTanlandi(type) {
   }
 }
 
-function chiqimSummaHisob() {
-  const miq = parseFloat(document.getElementById('c-miqdor').value) || 0;
-  const narx = parseFloat(document.getElementById('c-narx').value) || 0;
-  document.getElementById('c-jami-summa').innerText = (miq * narx).toLocaleString() + " so'm";
-}
+
 
 function barkodQidir(type) {
   const qPref = type === 'kirim' ? 'k' : 'c';
@@ -377,7 +377,6 @@ function kirimFormTozala() {
 function chiqimJadvalgaQosh() {
   const nom = document.getElementById('c-mahsulot').value;
   const miq = parseFloat(document.getElementById('c-miqdor').value);
-  const narx = parseFloat(document.getElementById('c-narx').value) || 0;
   const bir = document.getElementById('c-birlik').value;
   const izh = document.getElementById('c-izoh').value;
   
@@ -385,10 +384,9 @@ function chiqimJadvalgaQosh() {
   const qol = getJoriyZaxira(nom);
   if(miq > qol) { toast(`Zaxirada yetarli emas! Faqat ${qol} bor.`, "error"); return; }
   
-  pendingChiqim.push({ nom, miqdor: miq, narx, jami: miq * narx, birlik: bir, izoh: izh });
+  pendingChiqim.push({ nom, miqdor: miq, narx: 0, jami: 0, birlik: bir, izoh: izh });
   renderPending('chiqim');
-  ['c-mahsulot','c-miqdor','c-narx','c-izoh'].forEach(id => setVal(id, ''));
-  document.getElementById('c-jami-summa').innerText = "0 so'm";
+  ['c-mahsulot','c-miqdor','c-izoh'].forEach(id => setVal(id, ''));
   document.getElementById('c-zaxira-info').classList.remove('visible');
 }
 
@@ -399,7 +397,7 @@ function renderPending(type) {
   tbody.innerHTML = '';
   let total = 0;
   if(arr.length === 0) {
-    const colCount = type === 'kirim' ? 6 : 6;
+    const colCount = type === 'kirim' ? 6 : 4;
     tbody.innerHTML = `<tr><td colspan="${colCount}" class="empty">Jadval bo'sh</td></tr>`;
   } else {
     arr.forEach((item, idx) => {
@@ -419,8 +417,6 @@ function renderPending(type) {
           <td>${idx+1}</td>
           <td><strong>${item.nom}</strong></td>
           <td style="font-family:var(--mono)">${item.miqdor} ${item.birlik}</td>
-          <td>${item.narx.toLocaleString()}</td>
-          <td style="font-family:var(--mono); font-weight:700">${item.jami.toLocaleString()}</td>
           <td><button class="btn btn-ghost btn-sm" onclick="removePending('${type}', ${idx})">🗑️</button></td>
         `;
       }
@@ -1530,4 +1526,114 @@ function exportHisobotExcel() {
 
   XLSX.writeFile(wb, fileName);
   toast(`✅ ${groupList.length} ta karta Excel'ga saqlandi!`);
+}
+
+// ================= SNAPSHOT RESET (TARIXNI TOZALASH) =================
+function openSnapshotModal() {
+  if (currentUserRole !== 'admin') { toast("Sizda huquq yo'q", 'error'); return; }
+
+  // Natija hisob-kitobi
+  const yozuvlarSoni  = data.yozuvlar.length;
+  const kirimSoni     = data.yozuvlar.filter(y => y.tur === 'kirim').length;
+  const chiqimSoni    = data.yozuvlar.filter(y => y.tur === 'chiqim').length;
+  const mahsulotSoni  = data.mahsulotlar.length;
+
+  // Preview: mahsulotlar joriy qoldiqlari
+  let previewRows = data.mahsulotlar.map(m => {
+    const q = getJoriyZaxira(m.nom);
+    return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border)">
+      <span>${m.nom}</span>
+      <span style="font-family:var(--mono);font-weight:700;color:var(--success)">${q} ${m.birlik} → yangi boshlangich</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('snap-preview-content').innerHTML = `
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px">
+      <span>📊 Jami yozuvlar: <strong>${yozuvlarSoni}</strong></span>
+      <span style="color:var(--success)">📥 Kirimlar: <strong>${kirimSoni}</strong></span>
+      <span style="color:var(--danger)">📤 Chiqimlar: <strong>${chiqimSoni}</strong></span>
+      <span>📦 Mahsulotlar: <strong>${mahsulotSoni}</strong></span>
+    </div>
+    <div style="font-weight:600;margin-bottom:6px;font-size:0.82rem;color:var(--text-muted)">Mahsulotlarning yangi boshlangich qoldiqlari:</div>
+    ${previewRows || '<div style="color:var(--text-muted)">Mahsulotlar yo\'q</div>'}
+  `;
+
+  // Reset input va tugma
+  const inp = document.getElementById('snap-confirm-input');
+  const btn = document.getElementById('snap-confirm-btn');
+  if (inp) inp.value = '';
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; }
+
+  document.getElementById('snap-step-1').style.display = 'block';
+  document.getElementById('snap-step-2').style.display = 'none';
+  document.getElementById('snapshot-modal').classList.add('active');
+}
+
+function closeSnapshotModal() {
+  document.getElementById('snapshot-modal').classList.remove('active');
+}
+
+function checkSnapConfirm() {
+  const val = document.getElementById('snap-confirm-input').value.trim();
+  const btn = document.getElementById('snap-confirm-btn');
+  if (!btn) return;
+  if (val === 'TOZALA') {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.style.cursor = 'not-allowed';
+  }
+}
+
+function runSnapshotReset() {
+  if (currentUserRole !== 'admin') return;
+  const val = document.getElementById('snap-confirm-input').value.trim();
+  if (val !== 'TOZALA') { toast("Tasdiqlash so'zi noto'g'ri!", 'error'); return; }
+
+  // 1. AVVAL JSON ZAXIRA OLISH (avtomatik)
+  try {
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SANNUR_zaxira_tozalash_oldidan_${today()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    console.warn('Avtomatik zaxira olmadi:', e);
+  }
+
+  // 2. SNAPSHOT: har mahsulotning joriy qoldig'ini boshlangich sifatida yoz
+  const snapshotDate = today();
+  data.mahsulotlar.forEach(m => {
+    const joriyQ = getJoriyZaxira(m.nom);
+    m.boshlangich = joriyQ;
+    m.snapshotSana = snapshotDate; // qachon snapshot olingani
+  });
+
+  const o'chirilganSon = data.yozuvlar.length;
+  const mahsulotSon   = data.mahsulotlar.length;
+
+  // 3. TARIXNI TOZALASH
+  data.yozuvlar = [];
+
+  // 4. FIREBASE + LOCALSTORAGE GA SAQLASH
+  saveData();
+
+  // 5. NATIJA KO'RSATISH
+  document.getElementById('snap-result-text').innerHTML = `
+    <div style="margin-bottom:8px">🗑️ <strong>${o'chirilganSon} ta yozuv</strong> o'chirildi</div>
+    <div style="margin-bottom:8px">📦 <strong>${mahsulotSon} ta mahsulot</strong>ning joriy qoldig'i yangi boshlangich sifatida saqlandi</div>
+    <div style="margin-bottom:8px">👷 Ustalar ro'yxati saqlab qolindi</div>
+    <div style="color:var(--success);margin-top:12px">💾 Zaxira fayli avtomatik yuklab olindi</div>
+  `;
+
+  document.getElementById('snap-step-1').style.display = 'none';
+  document.getElementById('snap-step-2').style.display = 'block';
 }

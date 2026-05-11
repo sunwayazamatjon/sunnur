@@ -93,6 +93,9 @@
           onclick="document.getElementById('import-file').click()" title="JSON fayldan ma'lumotlarni tiklash">📂 Import
           JSON</button>
         <input type="file" id="import-file" style="display:none" accept=".json" onchange="importJSON(event)">
+        <button class="btn btn-sm" id="snapshot-reset-btn" onclick="openSnapshotModal()"
+          title="Tarixni tozalab, joriy qoldiqni boshlangich sifatida saqlash"
+          style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;display:none">🔄 Tozalash</button>
         <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">🌙 Qora</button>
         <button class="logout-btn" onclick="doLogout()">🚪 Chiqish</button>
       </div>
@@ -360,19 +363,11 @@
               </div>
               <div class="form-grid" style="margin-top:10px">
                 <div class="form-group"><label>Miqdori</label>
-                  <div class="unit-row"><input type="number" id="c-miqdor" placeholder="0" min="0" step="0.01"
-                      oninput="chiqimSummaHisob()"><select id="c-birlik">
+                  <div class="unit-row"><input type="number" id="c-miqdor" placeholder="0" min="0" step="0.01"><select id="c-birlik">
                       <option>dona</option>
                       <option>metr</option>
                       <option>kg</option>
                     </select></div>
-                </div>
-                <div class="form-group"><label>Narxi</label><input type="number" id="c-narx" placeholder="0" min="0"
-                    step="0.01" oninput="chiqimSummaHisob()"></div>
-                <div class="form-group"><label>Jami summa</label>
-                  <div id="c-jami-summa"
-                    style="font-weight:700; font-family:var(--mono); padding: 0.6rem; background:var(--bg); border:1px solid var(--border); border-radius:6px; height: 42px; display: flex; align-items: center;">
-                    0</div>
                 </div>
                 <div class="form-group"><label>Izoh</label><input type="text" id="c-izoh" placeholder="Ixtiyoriy"></div>
               </div>
@@ -393,14 +388,12 @@
                     <th>№</th>
                     <th>Mahsulot nomi</th>
                     <th>Miqdori</th>
-                    <th>Narxi</th>
-                    <th>Jami</th>
                     <th>Amal</th>
                   </tr>
                 </thead>
                 <tbody id="pending-chiqim-tbody">
                   <tr>
-                    <td colspan="5" class="empty">Jadval bo'sh</td>
+                    <td colspan="4" class="empty">Jadval bo'sh</td>
                   </tr>
                 </tbody>
               </table>
@@ -694,6 +687,54 @@
         </table>
       </div>
       <div id="hisobot-detail-total" style="margin-top:12px; text-align:right; font-family:var(--mono); font-weight:700; font-size:1.1rem; color:var(--success);"></div>
+    </div>
+  </div>
+
+  <!-- ===== SNAPSHOT RESET MODAL ===== -->
+  <div class="modal-overlay" id="snapshot-modal">
+    <div class="modal" style="max-width:540px">
+      <h3>🔄 Tarixni tozalash (Snapshot)</h3>
+
+      <!-- STEP 1: Ogolantirish -->
+      <div id="snap-step-1">
+        <div style="background:rgba(239,68,68,0.08);border:1px solid var(--danger);border-radius:10px;padding:16px;margin-bottom:16px">
+          <div style="font-weight:700;color:var(--danger);margin-bottom:8px">⚠️ DIQQAT! Bu amal qaytarib bo'lmaydi!</div>
+          <ul style="color:var(--text);font-size:0.9rem;line-height:1.8;padding-left:18px">
+            <li>Barcha kirim va chiqim <strong>tarixi o'chib ketadi</strong></li>
+            <li>Har bir mahsulotning <strong>joriy qoldig'i</strong> yangi «boshlangich» sifatida saqlanadi</li>
+            <li>Ustalar ro'yxati <strong>saqlab qoladi</strong></li>
+            <li>Mahsulotlar ro'yxati <strong>saqlab qoladi</strong></li>
+          </ul>
+        </div>
+        <div style="background:rgba(59,130,246,0.08);border:1px solid var(--secondary);border-radius:10px;padding:12px;margin-bottom:16px;font-size:0.88rem">
+          💡 <strong>Maslahat:</strong> Davom etishdan oldin «💾 Export JSON» tugmasi bilan zaxira oling.
+          <br><br>
+          <button class="btn btn-warning btn-sm" onclick="exportJSON()" style="margin-top:4px">💾 Zaxira olish (JSON)</button>
+        </div>
+        <div id="snap-preview" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;font-size:0.88rem;max-height:200px;overflow-y:auto">
+          <div style="font-weight:600;margin-bottom:8px">📊 O'chiriladigan ma'lumotlar:</div>
+          <div id="snap-preview-content">Yuklanmoqda...</div>
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="font-size:0.85rem;font-weight:600;color:var(--danger)">Tasdiqlash uchun quyidagini yozing: <code>TOZALA</code></label>
+          <input type="text" id="snap-confirm-input" placeholder="TOZALA" autocomplete="off"
+            oninput="checkSnapConfirm()"
+            style="width:100%;margin-top:6px;padding:0.6rem;border:2px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:1rem;font-family:var(--mono)">
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeSnapshotModal()">Bekor qilish</button>
+          <button class="btn btn-danger" id="snap-confirm-btn" onclick="runSnapshotReset()" disabled
+            style="opacity:0.5;cursor:not-allowed">🔄 Ha, tozalash</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Muvaffaqiyat -->
+      <div id="snap-step-2" style="display:none;text-align:center;padding:20px 0">
+        <div style="font-size:3rem;margin-bottom:12px">✅</div>
+        <div style="font-size:1.2rem;font-weight:700;margin-bottom:8px">Muvaffaqiyatli tozalandi!</div>
+        <div id="snap-result-text" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:20px"></div>
+        <button class="btn btn-primary" onclick="closeSnapshotModal()">Yopish</button>
+      </div>
     </div>
   </div>
 
