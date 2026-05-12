@@ -1617,7 +1617,7 @@ function runSnapshotReset() {
     m.snapshotSana = snapshotDate; // qachon snapshot olingani
   });
 
-  const o'chirilganSon = data.yozuvlar.length;
+  const ochirilganSon = data.yozuvlar.length;
   const mahsulotSon   = data.mahsulotlar.length;
 
   // 3. TARIXNI TOZALASH
@@ -1628,7 +1628,7 @@ function runSnapshotReset() {
 
   // 5. NATIJA KO'RSATISH
   document.getElementById('snap-result-text').innerHTML = `
-    <div style="margin-bottom:8px">🗑️ <strong>${o'chirilganSon} ta yozuv</strong> o'chirildi</div>
+    <div style="margin-bottom:8px">🗑️ <strong>${ochirilganSon} ta yozuv</strong> o'chirildi</div>
     <div style="margin-bottom:8px">📦 <strong>${mahsulotSon} ta mahsulot</strong>ning joriy qoldig'i yangi boshlangich sifatida saqlandi</div>
     <div style="margin-bottom:8px">👷 Ustalar ro'yxati saqlab qolindi</div>
     <div style="color:var(--success);margin-top:12px">💾 Zaxira fayli avtomatik yuklab olindi</div>
