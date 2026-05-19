@@ -363,7 +363,8 @@
               </div>
               <div class="form-grid" style="margin-top:10px">
                 <div class="form-group"><label>Miqdori</label>
-                  <div class="unit-row"><input type="number" id="c-miqdor" placeholder="0" min="0" step="0.01"><select id="c-birlik">
+                  <div class="unit-row"><input type="number" id="c-miqdor" placeholder="0" min="0" step="0.01"><select
+                      id="c-birlik">
                       <option>dona</option>
                       <option>metr</option>
                       <option>kg</option>
@@ -416,9 +417,11 @@
           <div class="card">
             <div class="card-title">📊 Kirim Hisoboti — Kim olib kelgan</div>
             <div class="filter-row" style="margin-bottom:16px;align-items:center">
-              <input type="text" id="hisobot-search" placeholder="🔍 Yetkazib beruvchi yoki vakil ismi" oninput="renderHisobot()" style="flex:1;min-width:200px">
+              <input type="text" id="hisobot-search" placeholder="🔍 Yetkazib beruvchi yoki vakil ismi"
+                oninput="renderHisobot()" style="flex:1;min-width:200px">
               <input type="month" id="hisobot-month" onchange="renderHisobot()" style="max-width:160px">
-              <button class="btn btn-success" onclick="exportHisobotExcel()" title="Tanlangan oydagi barcha kirimlarni Excel'ga saqlash" style="white-space:nowrap;gap:6px">
+              <button class="btn btn-success" onclick="exportHisobotExcel()"
+                title="Tanlangan oydagi barcha kirimlarni Excel'ga saqlash" style="white-space:nowrap;gap:6px">
                 📥 Excel saqlash
               </button>
             </div>
@@ -603,10 +606,6 @@
     <div class="modal"><button class="modal-close-btn" onclick="closeQoldiqEdit()">✕</button>
       <h3 id="edit-modal-title">✏️ Mahsulotni tahrirlash</h3><input type="hidden" id="edit-idx"><input type="hidden"
         id="edit-joriy-qoldiq">
-      <div class="edit-qoldiq-info" id="edit-qoldiq-info-box">
-        <div class="eqi-row"><span class="eqi-label">Joriy qoldiq (tizimda)</span><span class="eqi-val"
-            id="edit-joriy-display">—</span></div>
-      </div>
       <div class="form-grid" style="margin-top:14px">
         <div class="form-group"><label>Mahsulot nomi *</label><input type="text" id="edit-nom"
             placeholder="Mahsulot nomi"></div>
@@ -617,9 +616,8 @@
             <option>litr</option>
             <option>paket</option>
           </select></div>
-        <div class="form-group"><label>Minimal zaxira</label><input type="number" id="edit-min" placeholder="0" min="0"
-            step="0.01"></div>
-        <div class="form-group"><label>Barkod</label><input type="text" id="edit-barcode" placeholder="Barkod raqami"></div>
+        <div class="form-group"><label>Barkod</label><input type="text" id="edit-barcode" placeholder="Barkod raqami">
+        </div>
         <div class="form-group"><label>Haqiqiy qoldiq (sanaganingiz) *</label><input type="number"
             id="edit-yangi-qoldiq" placeholder="0" min="0" step="0.01" oninput="editQoldiqFarqHisob()"></div>
       </div>
@@ -641,22 +639,30 @@
       <input type="hidden" id="he-id">
       <div class="form-grid">
         <div class="form-group"><label>Sana</label><input type="date" id="he-sana"></div>
-        <div class="form-group"><label>Mahsulot</label><input type="text" id="he-mahsulot" readonly style="background:var(--bg); opacity:0.8"></div>
+        <div class="form-group"><label>Mahsulot</label><input type="text" id="he-mahsulot" readonly
+            style="background:var(--bg); opacity:0.8"></div>
         <div class="form-group"><label>Kim (Usta/Yetkazuvchi)</label><input type="text" id="he-ism"></div>
         <div class="form-group" id="he-obyekt-group"><label>Obyekt</label><input type="text" id="he-obyekt"></div>
         <div class="form-group">
           <label>Dastlabki miqdor</label>
-          <div id="he-old-miqdor" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-family: var(--mono); font-weight: 700; color: var(--text-muted);">0</div>
+          <div id="he-old-miqdor"
+            style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-family: var(--mono); font-weight: 700; color: var(--text-muted);">
+            0</div>
         </div>
-        <div class="form-group"><label>Yangi miqdor (Qolgani)</label><input type="number" id="he-miqdor" step="0.01" oninput="heSummaHisob()"></div>
+        <div class="form-group"><label>Yangi miqdor (Qolgani)</label><input type="number" id="he-miqdor" step="0.01"
+            oninput="heSummaHisob()"></div>
         <div class="form-group">
           <label>Jami summa</label>
-          <div id="he-jami" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-family: var(--mono); font-weight: 700; color: var(--success);">0 so'm</div>
+          <div id="he-jami"
+            style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-family: var(--mono); font-weight: 700; color: var(--success);">
+            0 so'm</div>
         </div>
-        <div class="form-group" style="grid-column: 1 / -1;"><label>Izoh * (Majburiy)</label><input type="text" id="he-izoh" placeholder="Sababini yozing (masalan: 2 ta qaytarildi)"></div>
+        <div class="form-group" style="grid-column: 1 / -1;"><label>Izoh * (Majburiy)</label><input type="text"
+            id="he-izoh" placeholder="Sababini yozing (masalan: 2 ta qaytarildi)"></div>
       </div>
       <div class="info-note" style="margin-top:15px">
-        💡 <strong>Qaytarish:</strong> Agar usta narsani qaytarib olib kelgan bo'lsa, "Yangi miqdor"ga usta ishlatgan (ushlab qolgan) miqdorni yozing. Qolgani omborga qaytadi.
+        💡 <strong>Qaytarish:</strong> Agar usta narsani qaytarib olib kelgan bo'lsa, "Yangi miqdor"ga usta ishlatgan
+        (ushlab qolgan) miqdorni yozing. Qolgani omborga qaytadi.
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeHistoryEdit()">Bekor qilish</button>
@@ -670,7 +676,9 @@
     <div class="modal" style="max-width:700px;width:95%">
       <button class="modal-close-btn" onclick="closeHisobotDetail()">✕</button>
       <h3 id="hisobot-detail-title">📦 Kirim tafsiloti</h3>
-      <div id="hisobot-detail-meta" style="margin-bottom:16px; padding:12px; background:var(--bg); border-radius:8px; border:1px solid var(--border);"></div>
+      <div id="hisobot-detail-meta"
+        style="margin-bottom:16px; padding:12px; background:var(--bg); border-radius:8px; border:1px solid var(--border);">
+      </div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -686,7 +694,9 @@
           <tbody id="hisobot-detail-tbody"></tbody>
         </table>
       </div>
-      <div id="hisobot-detail-total" style="margin-top:12px; text-align:right; font-family:var(--mono); font-weight:700; font-size:1.1rem; color:var(--success);"></div>
+      <div id="hisobot-detail-total"
+        style="margin-top:12px; text-align:right; font-family:var(--mono); font-weight:700; font-size:1.1rem; color:var(--success);">
+      </div>
     </div>
   </div>
 
@@ -697,8 +707,10 @@
 
       <!-- STEP 1: Ogolantirish -->
       <div id="snap-step-1">
-        <div style="background:rgba(239,68,68,0.08);border:1px solid var(--danger);border-radius:10px;padding:16px;margin-bottom:16px">
-          <div style="font-weight:700;color:var(--danger);margin-bottom:8px">⚠️ DIQQAT! Bu amal qaytarib bo'lmaydi!</div>
+        <div
+          style="background:rgba(239,68,68,0.08);border:1px solid var(--danger);border-radius:10px;padding:16px;margin-bottom:16px">
+          <div style="font-weight:700;color:var(--danger);margin-bottom:8px">⚠️ DIQQAT! Bu amal qaytarib bo'lmaydi!
+          </div>
           <ul style="color:var(--text);font-size:0.9rem;line-height:1.8;padding-left:18px">
             <li>Barcha kirim va chiqim <strong>tarixi o'chib ketadi</strong></li>
             <li>Har bir mahsulotning <strong>joriy qoldig'i</strong> yangi «boshlangich» sifatida saqlanadi</li>
@@ -706,17 +718,21 @@
             <li>Mahsulotlar ro'yxati <strong>saqlab qoladi</strong></li>
           </ul>
         </div>
-        <div style="background:rgba(59,130,246,0.08);border:1px solid var(--secondary);border-radius:10px;padding:12px;margin-bottom:16px;font-size:0.88rem">
+        <div
+          style="background:rgba(59,130,246,0.08);border:1px solid var(--secondary);border-radius:10px;padding:12px;margin-bottom:16px;font-size:0.88rem">
           💡 <strong>Maslahat:</strong> Davom etishdan oldin «💾 Export JSON» tugmasi bilan zaxira oling.
           <br><br>
-          <button class="btn btn-warning btn-sm" onclick="exportJSON()" style="margin-top:4px">💾 Zaxira olish (JSON)</button>
+          <button class="btn btn-warning btn-sm" onclick="exportJSON()" style="margin-top:4px">💾 Zaxira olish
+            (JSON)</button>
         </div>
-        <div id="snap-preview" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;font-size:0.88rem;max-height:200px;overflow-y:auto">
+        <div id="snap-preview"
+          style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;font-size:0.88rem;max-height:200px;overflow-y:auto">
           <div style="font-weight:600;margin-bottom:8px">📊 O'chiriladigan ma'lumotlar:</div>
           <div id="snap-preview-content">Yuklanmoqda...</div>
         </div>
         <div style="margin-bottom:14px">
-          <label style="font-size:0.85rem;font-weight:600;color:var(--danger)">Tasdiqlash uchun quyidagini yozing: <code>TOZALA</code></label>
+          <label style="font-size:0.85rem;font-weight:600;color:var(--danger)">Tasdiqlash uchun quyidagini yozing:
+            <code>TOZALA</code></label>
           <input type="text" id="snap-confirm-input" placeholder="TOZALA" autocomplete="off"
             oninput="checkSnapConfirm()"
             style="width:100%;margin-top:6px;padding:0.6rem;border:2px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:1rem;font-family:var(--mono)">

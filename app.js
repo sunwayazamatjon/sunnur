@@ -751,7 +751,10 @@ function openQoldiqEdit(nomi) {
   setVal('edit-izoh', '');
   
   document.getElementById('edit-nom').dataset.oldName = m.nom;
-  document.getElementById('edit-joriy-display').innerText = `${q} ${m.birlik}`;
+  const joriyDisplay = document.getElementById('edit-joriy-display');
+  if (joriyDisplay) {
+    joriyDisplay.innerText = `${q} ${m.birlik}`;
+  }
   document.getElementById('edit-farq-row').style.display = 'none';
   
   document.getElementById('qoldiq-edit-modal').classList.add('active');
@@ -782,7 +785,8 @@ function saveQoldiqEdit() {
   const oldName = document.getElementById('edit-nom').dataset.oldName;
   const newName = document.getElementById('edit-nom').value.trim();
   const yangiBirlik = document.getElementById('edit-birlik').value;
-  const yangiMin = parseFloat(document.getElementById('edit-min').value) || 0;
+  const editMinEl = document.getElementById('edit-min');
+  const yangiMin = editMinEl ? (parseFloat(editMinEl.value) || 0) : null;
   const yangiBarcode = document.getElementById('edit-barcode').value.trim();
   const yangiQoldiq = parseFloat(document.getElementById('edit-yangi-qoldiq').value);
   const izoh = document.getElementById('edit-izoh').value.trim() || '[KORREKSIYA]';
@@ -800,7 +804,9 @@ function saveQoldiqEdit() {
   if(m) {
     m.nom = newName;
     m.birlik = yangiBirlik;
-    m.min = yangiMin;
+    if (yangiMin !== null) {
+      m.min = yangiMin;
+    }
     m.barcode = yangiBarcode;
   }
   
